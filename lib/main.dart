@@ -6,6 +6,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 // import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:intl/intl.dart';
@@ -129,38 +130,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 activeIndicator: const SplitIndicator(
                   viewMode: SplitViewMode.Horizontal,
                 ),
-                controller: SplitViewController(limits: [
-                  WeightLimit(min: 0.2, max: 0.5),
-                  WeightLimit(min: 0.2, max: 0.5),
-                  WeightLimit(max: 0.5, min: 0.2),
+                controller: SplitViewController(weights: [
+                  0.45,
+                  0.55
+                ], limits: [
+                  WeightLimit(min: 0.3, max: 0.6),
+                  WeightLimit(min: 0.3, max: 0.75),
+                  // WeightLimit(max: 0.5, min: 0.2),
                 ]),
                 onWeightChanged: (w) {
                   // print("Vertical $w");
                 },
                 children: [
-                  // SplitView(
-                  //   viewMode: SplitViewMode.Horizontal,
-                  //   indicator: const SplitIndicator(viewMode: SplitViewMode.Horizontal),
-                  //   activeIndicator: const SplitIndicator(
-                  //     viewMode: SplitViewMode.Horizontal,
-                  //     isActive: true,
-                  //   ),
-                  //   children: [
-                  //     Container(
-                  //       color: Colors.red,
-                  //       child: const Center(child: Text("View1")),
-                  //     ),
-                  //     Container(
-                  //       color: Colors.blue,
-                  //       child: const Center(child: Text("View2")),
-                  //     ),
-                  //     Container(
-                  //       color: Color(0xff39ff14),
-                  //       child: const Center(child: Text("View3")),
-                  //     ),
-                  //   ],
-                  //   onWeightChanged: (w) => print("Horizon: $w"),
-                  // ),
                   SplitContainer(
                     heading: const SplitScreenTitle(
                       text: "Article List",
@@ -183,157 +164,179 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ),
-                  SplitContainer(
-                    heading: SplitScreenTitle(
-                      iconData: CupertinoIcons.folder,
-                      text: "Folder View",
-                      trailing: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side:
-                              BorderSide(width: 0.5, color: Colors.blue[200]!),
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          backgroundColor: Colors.blue[50],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7),
+                  SplitView(
+                    gripColor: Colors.white70,
+                    gripColorActive: Colors.white,
+                    gripSize: 2,
+                    viewMode: SplitViewMode.Vertical,
+                    controller: SplitViewController(limits: [
+                      WeightLimit(min: 0.25, max: 0.8),
+                      WeightLimit(min: 0.25, max: 0.8),
+                      // WeightLimit(max: 0.5, min: 0.2),
+                    ]),
+                    indicator:
+                        const SplitIndicator(viewMode: SplitViewMode.Vertical),
+                    activeIndicator: const SplitIndicator(
+                      viewMode: SplitViewMode.Vertical,
+                      isActive: true,
+                    ),
+                    children: [
+                      SplitContainer(
+                        heading: SplitScreenTitle(
+                          iconData: CupertinoIcons.folder,
+                          text: "Folder View",
+                          trailing: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  width: 0.5, color: Colors.blue[200]!),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5),
+                              backgroundColor: Colors.blue[50],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                            ),
+                            onPressed: () {},
+                            icon: Icon(
+                              CupertinoIcons.add,
+                              color: Colors.blue[400],
+                              size: 16,
+                            ),
+                            label: Text(
+                              "Create new",
+                              style: TextStyle(
+                                  color: Colors.blue[300], fontSize: 11),
+                            ),
                           ),
                         ),
-                        onPressed: () {},
-                        icon: Icon(
-                          CupertinoIcons.add,
-                          color: Colors.blue[400],
-                          size: 16,
-                        ),
-                        label: Text(
-                          "Create new",
-                          style:
-                              TextStyle(color: Colors.blue[300], fontSize: 11),
-                        ),
-                      ),
-                    ),
-                    // IconAndLabel(
-                    //   icon: Icon(
-                    //     CupertinoIcons.list_bullet,
-                    //     color: Colors.blue[400],
-                    //     // size: 20,
-                    //   ),
-                    //   gap: 12,
-                    //   label: Text(
-                    //     "Folder view",
-                    //     style: TextStyle(color: Colors.grey[800], fontSize: 17),
-                    //   ),
-                    // ),
-                    container: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double width = constraints.maxWidth;
-                        return Center(
-                          child: Opacity(
-                            opacity: 0.15,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                const SizedBox(
-                                  height: 150,
-                                ),
-                                Lottie.asset(
-                                  "assets/lottie/folder_animation.json",
-                                  repeat: false,
-                                  fit: BoxFit.scaleDown,
-                                  width: width / 2.5,
-                                ),
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 25),
-                                    child: FittedBox(
-                                      child: Text(
-                                        "Organize your Articles in folders here...",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.blue[900],
-                                          fontWeight: FontWeight.w700,
-                                          fontFamily: "DidactGothic",
+                        // IconAndLabel(
+                        //   icon: Icon(
+                        //     CupertinoIcons.list_bullet,
+                        //     color: Colors.blue[400],
+                        //     // size: 20,
+                        //   ),
+                        //   gap: 12,
+                        //   label: Text(
+                        //     "Folder view",
+                        //     style: TextStyle(color: Colors.grey[800], fontSize: 17),
+                        //   ),
+                        // ),
+                        container: LayoutBuilder(
+                          builder: (context, constraints) {
+                            double width = constraints.maxWidth;
+                            double height = constraints.maxHeight;
+                            print("upper: w,h: $width,$height");
+                            return Center(
+                              child: Opacity(
+                                opacity: 0.15,
+                                child: Stack(
+                                  children: [
+                                    // const SizedBox(
+                                    //   height: 150,
+                                    // ),
+                                    Align(
+                                      alignment: stockImageAndTextAlignment(
+                                          width, height, true),
+                                      child: Lottie.asset(
+                                        "assets/lottie/folder_animation.json",
+                                        repeat: false,
+                                        fit: BoxFit.scaleDown,
+                                        width: width / 2.5,
+                                      ),
+                                    ),
+                                    Align(
+                                      alignment: stockImageAndTextAlignment(
+                                          width, height, false),
+                                      child: FittedBox(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          "Organize your Articles\n in folders here...",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            color: Colors.blue[900],
+                                            fontWeight: FontWeight.w700,
+                                            fontFamily: "DidactGothic",
+                                          ),
                                         ),
                                       ),
                                     )
-                                    // AutoSizeText(
-                                    //   "Organize your Articles in folders here...",
-                                    //   minFontSize: 9,
-                                    //   maxFontSize: 20,
-                                    //   textAlign: TextAlign.center,
-                                    //   style: TextStyle(
-                                    //     color: Colors.blue[900],
-                                    //     fontWeight: FontWeight.w700,
-                                    //     fontFamily: "DidactGothic",
-                                    //   ),
-                                    // ),
-                                    )
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    containerLeftMargin: 5,
-                    containerRightMargin: 5,
-                  ),
-                  SplitContainer(
-                    heading: const SplitScreenTitle(
-                        text: "Priority View",
-                        iconData: CupertinoIcons.text_badge_checkmark),
-                    container: LayoutBuilder(builder: (context, constraints) {
-                      double width = constraints.maxWidth;
-                      // print(width);
-                      return Opacity(
-                        opacity: 0.15,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              child: Align(
-                                alignment: const Alignment(0, -0.35),
-                                child: Lottie.asset(
-                                  "assets/lottie/kanban_notes_animation.json",
-                                  repeat: false,
-                                  width: constraints.maxWidth / 1.71,
+                                  ],
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              child: Align(
-                                alignment: width < 550
-                                    ? (width < 350)
-                                        ? const Alignment(0, 0.08)
-                                        : const Alignment(0, 0.15)
-                                    : const Alignment(0, 0.25),
-                                child: FittedBox(
-                                  child: Text(
-                                    "Kanban style Priority view...",
-                                    style: TextStyle(
-                                      color: Colors.blue[900],
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: width > 350 ? 18 : 15,
-                                      fontFamily: "DidactGothic",
-                                    ),
-                                    // AutoSizeText(
-                                    //   "Kanban style Priority view...",
-                                    //   minFontSize: 9,
-                                    //   maxFontSize: 15,
-                                    //   maxLines: 1,
-                                    //   style: TextStyle(
-                                    //     color: Colors.blue[900],
-                                    //     fontWeight: FontWeight.w700,
-                                    //     fontFamily: "DidactGothic",
-                                    //   ),
-                                    // ),
+                            );
+                          },
+                        ),
+                        containerLeftMargin: 5,
+                        containerRightMargin: 15,
+                      ),
+                      SplitContainer(
+                        heading: const SplitScreenTitle(
+                            text: "Priority View",
+                            iconData: CupertinoIcons.text_badge_checkmark),
+                        container:
+                            LayoutBuilder(builder: (context, constraints) {
+                          double width = constraints.maxWidth;
+                          double height = constraints.maxHeight;
+                          print("$width, $height");
+                          return Opacity(
+                            opacity: 0.15,
+                            child: Stack(
+                              children: [
+                                Align(
+                                  alignment: stockImageAndTextAlignment(
+                                      width, height, true),
+                                  child: Lottie.asset(
+                                    "assets/lottie/kanban_notes_animation.json",
+                                    repeat: false,
+                                    fit: BoxFit.scaleDown,
+                                    width: width / 1.71,
+                                    height: height > 330 ? 300 : null,
                                   ),
                                 ),
-                              ),
-                            )
-                          ],
-                        ),
-                      );
-                    }),
-                    containerLeftMargin: 5,
-                    containerRightMargin: 15,
+                                Positioned(
+                                  child: Align(
+                                    alignment: stockImageAndTextAlignment(
+                                        width, height, false),
+
+                                    // width < 550
+                                    //     ? (width < 350)
+                                    //         ? const Alignment(0, 0.08)
+                                    //         : const Alignment(0, 0.15)
+                                    //     : const Alignment(0, 0.25),
+                                    child: FittedBox(
+                                      child: Text(
+                                        "Kanban styled\n Priority view...",
+                                        style: TextStyle(
+                                          color: Colors.blue[900],
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 20,
+                                          fontFamily: "DidactGothic",
+                                        ),
+                                        // AutoSizeText(
+                                        //   "Kanban style Priority view...",
+                                        //   minFontSize: 9,
+                                        //   maxFontSize: 15,
+                                        //   maxLines: 1,
+                                        //   style: TextStyle(
+                                        //     color: Colors.blue[900],
+                                        //     fontWeight: FontWeight.w700,
+                                        //     fontFamily: "DidactGothic",
+                                        //   ),
+                                        // ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        }),
+                        containerLeftMargin: 5,
+                        containerRightMargin: 15,
+                      ),
+                    ],
+                    // onWeightChanged: (w) => print("Horizon: $w"),
                   ),
                 ],
               ),
@@ -630,53 +633,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           );
-          // ListTile(
-          //   visualDensity: VisualDensity.comfortable,
-          //   // isThreeLine: true,
-
-          //   leading: Image.asset(
-          //     // "assets/images/doodle_bg_1.png",
-          //     article.favIconLink,
-          //     fit: BoxFit.fitHeight,
-          //   ),
-          //   // Image.network(
-          //   //   article.favIconLink,
-          //   //   fit: BoxFit.fill,
-          //   //   loadingBuilder: (context, child, loadingProgress) {
-          //   //     return loadingProgress == null
-          //   //         ? child
-          //   //         : Center(
-          //   //             child: CircularProgressIndicator(
-          //   //               value: loadingProgress.expectedTotalBytes != null
-          //   //                   ? loadingProgress.cumulativeBytesLoaded /
-          //   //                       loadingProgress.expectedTotalBytes!
-          //   //                   : null,
-          //   //             ),
-          //   //           );
-          //   //   },
-          //   // ),
-          //   title: Text(article.title),
-          //   subtitle: Text(
-          //     article.description,
-          //     style: const TextStyle(color: Colors.grey, fontSize: 12),
-          //     softWrap: true,
-          //     overflow: TextOverflow.ellipsis,
-          //   ),
-          //   trailing: Row(
-          //     mainAxisAlignment: MainAxisAlignment.end,
-          //     mainAxisSize: MainAxisSize.min,
-          //     children: [
-          //       AnimatedOpacity(
-          //         opacity: isExpanded ? 0 : 1,
-          //         duration: const Duration(milliseconds: 200),
-          //         // visible: !isExpanded,
-          //         child: const Icon(Icons.favorite_border_outlined),
-          //       ),
-          //       IconButton.outlined(
-          //           onPressed: () {}, icon: const Icon(Icons.menu))
-          //     ],
-          //   ),
-          // );
         },
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -921,5 +877,80 @@ class _MyHomePageState extends State<MyHomePage> {
         default:
       }
     }
+  }
+
+  Alignment stockImageAndTextAlignment(
+      double width, double height, bool isImage) {
+    late Alignment image, text;
+    //height based alignment
+    if (isImage) {
+      //image alignment
+      if (height > 170) {
+        image = const Alignment(-0.35, 0);
+      } else {
+        image = const Alignment(-0.3, 0);
+      }
+    } else {
+      //text alignment
+      if (height > 170) {
+        text = const Alignment(0.35, 0);
+      } else {
+        text = const Alignment(0.3, 0);
+      }
+    }
+    //width based alignment
+    if (isImage) {
+      if (width < 933 && width > 700) {
+        image = Alignment(image.x, image.y);
+        print("700-933");
+      } else if (width < 700 && width > 636) {
+        image = Alignment(image.x - 0.05, image.y);
+        print("700-636");
+      } else if (width < 636) {
+        image = Alignment(image.x - 0.12, image.y);
+        print("636 and less");
+      } else {
+        //width > 933
+        // image = Alignment(image.x - 0.12, image.y);
+        image = Alignment(image.x + 0.1, image.y);
+        print("else, must be >933");
+      }
+    } else {
+      if (width < 933 && width > 700) {
+        text = Alignment(text.x, text.y);
+      } else if (width < 700 && width > 636) {
+        text = Alignment(text.x + 0.05, text.y);
+      } else if (width < 636) {
+        text = Alignment(text.x + 0.12, text.y);
+      } else {
+        //width > 933
+        // text = Alignment(text.x + 0.15, text.y);
+        text = Alignment(text.x - 0.1, text.y);
+      }
+    }
+    return isImage ? image : text;
+  }
+
+//made for priority section stock image and text differentiation with folder section.
+  Alignment priorityStockImageAlignment(
+      double width, double height, bool isImage) {
+    late Alignment image, text;
+    //height based alignment
+    if (isImage) {
+      if (height > 200) {
+        image = const Alignment(-0.35, 0);
+      } else {
+        image = const Alignment(-0.25, 0);
+      }
+    } else {
+      if (height > 200) {
+        text = const Alignment(0.35, 0);
+      } else {
+        text = const Alignment(0.25, 0);
+      }
+    }
+    //width based alignment
+
+    return isImage ? image : text;
   }
 }
