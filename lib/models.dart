@@ -38,6 +38,15 @@ class Article {
   }
 }
 
+enum SortType {
+  dateNewestFirst,
+  dateOldestFirst,
+  priorityHighestFirst,
+  priorityLowestFirst
+}
+
+enum FilterType { none, byTagName, starred }
+
 enum Priority { low, mediumLow, normal, high, veryHigh }
 
 Map<Priority, Color> priorityColor = {
@@ -185,3 +194,16 @@ List<Article> generateArticles(int numberOfItems) {
     );
   });
 }
+
+// List<Article> sampleData = [
+//   Article(
+//       title: "How to design a great UI/UX",
+//       description:
+//           "Description of article containing some long text information specific to the saved page.",
+//       url: allUrls[0],
+//       dateTimeAdded: DateTime(2023,09,15),
+      
+//       priority: Priority.mediumLow,
+//       tags: [],
+//       estCompletionTime: estCompletionTime)
+// ];

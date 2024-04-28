@@ -6,20 +6,21 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 // import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/my_expansion_panel_widget.dart';
+import 'package:responsive_1/providers/data_provider.dart';
 import 'package:responsive_1/widgets.dart';
 import 'package:split_view/split_view.dart';
 import 'package:universal_html/html.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const ProviderScope(child: MyApp()));
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({Key? key, this.title}) : super(key: key);
 
   final String? title;
@@ -48,7 +49,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   void initState() {
     super.initState();
@@ -58,9 +59,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    var data = ref.watch(filteredAndSortedArticlesProvider);
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
-    var data = generateArticles(5);
+    // var data = generateArticles(5);
+
     return Scaffold(
       appBar: appbar(),
       // backgroundColor: const Color(0xfff5f6f8),
@@ -159,7 +162,23 @@ class _MyHomePageState extends State<MyHomePage> {
                           //   padding: const EdgeInsets.fromLTRB(0, 6, 0, 6),
                           //   child: FilterSortButtons(),
                           // ),
-                          articleListFunction(data),
+                          data.when(
+                            data: (data) => articleListFunction(data),
+                            error: (error, stackTrace) => Center(
+                              child: Text("Error: $error"),
+                            ),
+                            loading: () => Padding(
+                              padding: const EdgeInsets.only(top: 250),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.blue.shade400,
+                                  strokeCap: StrokeCap.round,
+                                  strokeWidth: 5,
+                                  strokeAlign: 1,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -225,7 +244,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           builder: (context, constraints) {
                             double width = constraints.maxWidth;
                             double height = constraints.maxHeight;
-                            print("upper: w,h: $width,$height");
                             return Center(
                               child: Opacity(
                                 opacity: 0.15,
@@ -278,7 +296,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             LayoutBuilder(builder: (context, constraints) {
                           double width = constraints.maxWidth;
                           double height = constraints.maxHeight;
-                          print("$width, $height");
                           return Opacity(
                             opacity: 0.15,
                             child: Stack(
@@ -901,19 +918,19 @@ class _MyHomePageState extends State<MyHomePage> {
     //width based alignment
     if (isImage) {
       if (width < 933 && width > 700) {
-        image = Alignment(image.x, image.y);
-        print("700-933");
+        // image = Alignment(image.x, image.y);
+        // print("700-933");
       } else if (width < 700 && width > 636) {
         image = Alignment(image.x - 0.05, image.y);
-        print("700-636");
+        // print("700-636");
       } else if (width < 636) {
         image = Alignment(image.x - 0.12, image.y);
-        print("636 and less");
+        // print("636 and less");
       } else {
         //width > 933
         // image = Alignment(image.x - 0.12, image.y);
         image = Alignment(image.x + 0.1, image.y);
-        print("else, must be >933");
+        // print("else, must be >933");
       }
     } else {
       if (width < 933 && width > 700) {

@@ -1,6 +1,9 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:responsive_1/models.dart';
+import 'package:responsive_1/providers/data_provider.dart';
 
 class AppbarIconButton extends StatelessWidget {
   final Widget icon;
@@ -228,13 +231,13 @@ class ExpandedBodyRowItem extends StatelessWidget {
   }
 }
 
-class FilterSortButtons extends StatelessWidget {
+class FilterSortButtons extends ConsumerWidget {
   const FilterSortButtons({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -244,13 +247,14 @@ class FilterSortButtons extends StatelessWidget {
           position: PopupMenuPosition.under,
           itemBuilder: (context) => [
             PopupMenuItem(
-                child: IconAndLabel(
-              icon: Icon(
-                CupertinoIcons.tag,
-                color: Colors.blue.shade600,
+              child: IconAndLabel(
+                icon: Icon(
+                  CupertinoIcons.tag,
+                  color: Colors.blue.shade600,
+                ),
+                label: const Text("Tag name"),
               ),
-              label: const Text("Tag name"),
-            ))
+            ),
           ],
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
@@ -286,12 +290,48 @@ class FilterSortButtons extends StatelessWidget {
                   icon:
                       Icon(CupertinoIcons.sort_up, color: Colors.blue.shade600),
                   label: const Text("Date - Newest first")),
+              onTap: () {
+                //sort by date newest first
+                ref
+                    .read(selectedSortTypeProvider.notifier)
+                    .updateSortType(SortType.dateNewestFirst);
+              },
             ),
             PopupMenuItem(
               child: IconAndLabel(
                   icon: Icon(CupertinoIcons.sort_down,
                       color: Colors.blue.shade600),
                   label: const Text("Date - Oldest first")),
+              onTap: () {
+                //sort by date oldest first
+                ref
+                    .read(selectedSortTypeProvider.notifier)
+                    .updateSortType(SortType.dateOldestFirst);
+              },
+            ),
+            PopupMenuItem(
+              child: IconAndLabel(
+                  icon: Icon(Icons.priority_high_rounded,
+                      color: Colors.blue.shade600),
+                  label: const Text("Priority - Highest first")),
+              onTap: () {
+                //sort by priority highest first
+                ref
+                    .read(selectedSortTypeProvider.notifier)
+                    .updateSortType(SortType.priorityHighestFirst);
+              },
+            ),
+            PopupMenuItem(
+              child: IconAndLabel(
+                  icon: Icon(Icons.low_priority_rounded,
+                      color: Colors.blue.shade600),
+                  label: const Text("Priority - Lowest first")),
+              onTap: () {
+                //sort by priority lowest first
+                ref
+                    .read(selectedSortTypeProvider.notifier)
+                    .updateSortType(SortType.priorityLowestFirst);
+              },
             ),
           ],
           child: OutlinedButton.icon(
