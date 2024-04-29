@@ -56,7 +56,8 @@ Future<List<Article>> filteredAndSortedArticles(
       {
         List<String> selectedtags =
             ref.read(selectedTagListForFilteringProvider);
-        print("all tags from saved data: $selectedtags");
+        print("selected tags for filtering: $selectedtags");
+        print("all tags available from data: $allTags");
         currentList = currentList
             .where((article) =>
                 selectedtags.any((tag) => article.tags.contains(tag)))

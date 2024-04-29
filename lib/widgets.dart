@@ -96,6 +96,7 @@ class IconAndLabel extends StatelessWidget {
   final Widget icon;
   final Widget label;
   final double gap;
+
   const IconAndLabel({
     super.key,
     required this.icon,
@@ -236,23 +237,89 @@ class FilterSortButtons extends ConsumerWidget {
     super.key,
   });
 
+  TextStyle? selectionBasedStyle(dynamic selectedType, dynamic thisType) {
+    if (thisType == selectedType) {
+      return TextStyle(color: Colors.blue.shade400);
+    } else {
+      return null;
+    }
+  }
+
+  Future<void>
+      makeDelay() async => //made for letting the menu close first so as to make app feel not too laggy
+          await Future.delayed(const Duration(milliseconds: 300));
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(selectedFilterTypeProvider, (previous, newFilter) {
+      if (newFilter != FilterType.byTagName) return;
+      // showModalBottomSheet(context: context, builder: (context) => ,);
+    });
+    FilterType selectedFilter = ref.watch(selectedFilterTypeProvider);
+    SortType selectedSorting = ref.watch(selectedSortTypeProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        //sort button
+        //filter button
         PopupMenuButton(
+          offset: const Offset(-100, 2),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(16.0),
+            ),
+          ),
+          popUpAnimationStyle: AnimationStyle(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+          ),
           tooltip: "Filter Options",
           position: PopupMenuPosition.under,
           itemBuilder: (context) => [
             PopupMenuItem(
+              onTap: () async {
+                //filter by tag name
+                await makeDelay();
+                ref
+                    .read(selectedFilterTypeProvider.notifier)
+                    .updateFilterType(FilterType.byTagName);
+              },
               child: IconAndLabel(
+                gap: 7,
                 icon: Icon(
                   CupertinoIcons.tag,
                   color: Colors.blue.shade600,
                 ),
-                label: const Text("Tag name"),
+                label: Text(
+                  "Tag name",
+                  style: selectionBasedStyle(
+                    // ref.read(selectedFilterTypeProvider),
+                    selectedFilter,
+                    FilterType.byTagName,
+                  ),
+                ),
+              ),
+            ),
+            PopupMenuItem(
+              onTap: () async {
+                //clear all filters
+                await makeDelay();
+                ref
+                    .read(selectedFilterTypeProvider.notifier)
+                    .updateFilterType(FilterType.none);
+              },
+              child: IconAndLabel(
+                gap: 7,
+                icon: Icon(
+                  CupertinoIcons.xmark,
+                  color: Colors.blue.shade600,
+                ),
+                label: Text(
+                  "No Filters",
+                  style: selectionBasedStyle(
+                    // ref.read(selectedFilterTypeProvider),
+                    selectedFilter,
+                    FilterType.none,
+                  ),
+                ),
               ),
             ),
           ],
@@ -280,18 +347,35 @@ class FilterSortButtons extends ConsumerWidget {
             ),
           ),
         ),
-        //filter button
+        //sort button
         PopupMenuButton(
+          offset: const Offset(20, 2),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(16.0),
+            ),
+          ),
+          popUpAnimationStyle: AnimationStyle(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+          ),
           tooltip: "Sort options",
           position: PopupMenuPosition.under,
           itemBuilder: (context) => [
             PopupMenuItem(
               child: IconAndLabel(
-                  icon:
-                      Icon(CupertinoIcons.sort_up, color: Colors.blue.shade600),
-                  label: const Text("Date - Newest first")),
-              onTap: () {
+                icon: Icon(CupertinoIcons.sort_up, color: Colors.blue.shade600),
+                label: Text(
+                  "Date - Newest first",
+                  style: selectionBasedStyle(
+                    selectedSorting, // ref.read(selectedSortTypeProvider),
+                    SortType.dateNewestFirst,
+                  ),
+                ),
+              ),
+              onTap: () async {
                 //sort by date newest first
+                await makeDelay();
                 ref
                     .read(selectedSortTypeProvider.notifier)
                     .updateSortType(SortType.dateNewestFirst);
@@ -301,9 +385,16 @@ class FilterSortButtons extends ConsumerWidget {
               child: IconAndLabel(
                   icon: Icon(CupertinoIcons.sort_down,
                       color: Colors.blue.shade600),
-                  label: const Text("Date - Oldest first")),
-              onTap: () {
+                  label: Text(
+                    "Date - Oldest first",
+                    style: selectionBasedStyle(
+                      selectedSorting, // ref.read(selectedSortTypeProvider),
+                      SortType.dateOldestFirst,
+                    ),
+                  )),
+              onTap: () async {
                 //sort by date oldest first
+                await makeDelay();
                 ref
                     .read(selectedSortTypeProvider.notifier)
                     .updateSortType(SortType.dateOldestFirst);
@@ -313,9 +404,16 @@ class FilterSortButtons extends ConsumerWidget {
               child: IconAndLabel(
                   icon: Icon(Icons.priority_high_rounded,
                       color: Colors.blue.shade600),
-                  label: const Text("Priority - Highest first")),
-              onTap: () {
+                  label: Text(
+                    "Priority - Highest first",
+                    style: selectionBasedStyle(
+                      selectedSorting, // ref.read(selectedSortTypeProvider),
+                      SortType.priorityHighestFirst,
+                    ),
+                  )),
+              onTap: () async {
                 //sort by priority highest first
+                await makeDelay();
                 ref
                     .read(selectedSortTypeProvider.notifier)
                     .updateSortType(SortType.priorityHighestFirst);
@@ -325,9 +423,16 @@ class FilterSortButtons extends ConsumerWidget {
               child: IconAndLabel(
                   icon: Icon(Icons.low_priority_rounded,
                       color: Colors.blue.shade600),
-                  label: const Text("Priority - Lowest first")),
-              onTap: () {
+                  label: Text(
+                    "Priority - Lowest first",
+                    style: selectionBasedStyle(
+                      selectedSorting, // ref.read(selectedSortTypeProvider),
+                      SortType.priorityLowestFirst,
+                    ),
+                  )),
+              onTap: () async {
                 //sort by priority lowest first
+                await makeDelay();
                 ref
                     .read(selectedSortTypeProvider.notifier)
                     .updateSortType(SortType.priorityLowestFirst);
@@ -360,5 +465,21 @@ class FilterSortButtons extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+class ModalBottomSheetForTagFiltering extends ConsumerStatefulWidget {
+  const ModalBottomSheetForTagFiltering({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _ModalBottomSheetForTagFilteringState();
+}
+
+class _ModalBottomSheetForTagFilteringState
+    extends ConsumerState<ModalBottomSheetForTagFiltering> {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }

@@ -86,12 +86,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         ],
         duration: const Duration(seconds: 10),
         child: Container(
-          // decoration: const BoxDecoration(
-          //   image: DecorationImage(
-          //     image: AssetImage("assets/images/doodle_bg_1.png"),
-          //     repeat: ImageRepeat.repeatX,
-          //   ),
-          // ),
           padding: EdgeInsets.only(
             left: screenWidth * 0.02,
             right: screenWidth * 0.02,
