@@ -6,6 +6,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 // import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,10 +23,24 @@ import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(const ProviderScope(child: MyApp()));
 
+// class _EagerInitialization extends ConsumerWidget {
+//   const _EagerInitialization({required this.child});
+//   final Widget child;
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     double width = MediaQuery.of(context).size.width;
+//     ref.read(isMobileProvider.notifier).init(width);
+//     ref.watch(isMobileProvider);
+//     return child;
+//   }
+// }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  // const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -62,6 +77,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     var data = ref.watch(filteredAndSortedArticlesProvider);
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
+    // ref.watch(isMobileProvider.notifier).init(screenWidth);
     // var data = generateArticles(5);
 
     return Scaffold(
@@ -140,10 +156,48 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 },
                 children: [
                   SplitContainer(
-                    heading: const SplitScreenTitle(
+                    heading: SplitScreenTitle(
                       text: "Article List",
                       iconData: CupertinoIcons.list_bullet_below_rectangle,
-                      trailing: FilterSortButtons(),
+                      trailing: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Visibility(
+                            visible: ref.watch(selectedFilterTypeProvider) !=
+                                FilterType.none,
+                            child: SizedBox(
+                              height: 27,
+                              child: TextButton(
+                                onPressed: () {
+                                  ref
+                                      .read(selectedFilterTypeProvider.notifier)
+                                      .updateFilterType(FilterType.none);
+                                },
+                                style: TextButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 5),
+                                ),
+                                child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(CupertinoIcons.xmark_octagon,
+                                          size: 18),
+                                      SizedBox(
+                                        width: 3,
+                                      ),
+                                      Text(
+                                        "Clear Filters",
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ]),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const FilterSortButtons(),
+                        ],
+                      ),
                     ),
                     container: SingleChildScrollView(
                       // physics: const BouncingScrollPhysics(),
@@ -161,15 +215,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             error: (error, stackTrace) => Center(
                               child: Text("Error: $error"),
                             ),
-                            loading: () => Padding(
-                              padding: const EdgeInsets.only(top: 250),
+                            loading: () => const Padding(
+                              padding: EdgeInsets.only(top: 250),
                               child: Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.blue.shade400,
-                                  strokeCap: StrokeCap.round,
-                                  strokeWidth: 5,
-                                  strokeAlign: 1,
-                                ),
+                                child: CustomCircularProgress(),
                               ),
                             ),
                           ),
@@ -436,6 +485,13 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   }
 
   MyExpansionPanelList articleListFunction(List<Article> data) {
+    var selectedTags =
+        ref.read(selectedFilterTypeProvider) == FilterType.byTagName
+            ? ref
+                .read(selectedTagListForFilteringProvider)
+                .map((e) => e.value.toString())
+                .toList()
+            : [];
     return MyExpansionPanelList.radio(
       expansionCallback: (int index, bool isExpanded) {
         // setState(() {
@@ -444,12 +500,13 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         // });
       },
       children: data.map<MyExpansionPanel>((Article article) {
-        return expansionPanelRadioWidget(article);
+        return expansionPanelRadioWidget(article, selectedTags);
       }).toList(),
     );
   }
 
-  MyExpansionPanelRadio expansionPanelRadioWidget(Article article) {
+  MyExpansionPanelRadio expansionPanelRadioWidget(
+      Article article, List<dynamic> selectedtags) {
     AutoSizeGroup autoSizeGroupInstance1 = AutoSizeGroup();
     return MyExpansionPanelRadio(
         value: article,
@@ -628,12 +685,37 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             ),
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              setState(() {
+                                article.isFavouite = !article.isFavouite;
+                              });
+                            },
                             icon: article.isFavouite
-                                ? const Icon(CupertinoIcons.star_fill)
+                                ?
+                                // ShaderMask(
+                                //     blendMode: BlendMode.srcIn,
+                                //     shaderCallback: (bounds) =>
+                                //         const RadialGradient(
+                                //       center: Alignment.centerLeft,
+                                //       stops: [.3, 0.8, 1],
+                                //       radius: 0.65,
+                                //       colors: [
+                                //         // Colors.yellow,
+                                //         // Colors.amber,
+                                //         Color(0xff5c88e5),
+                                //         Color(0xff9176bd),
+                                //         Color(0xffbf6b72),
+                                //       ],
+                                //     ).createShader(bounds),
+                                // child:
+                                const Icon(
+                                    CupertinoIcons.star_fill,
+                                    // color: Colors.amber,
+                                  )
+                                // )
                                 : const Icon(CupertinoIcons.star),
                             color:
-                                article.isFavouite ? Colors.blue : Colors.grey,
+                                article.isFavouite ? Colors.amber : Colors.grey,
                             iconSize: 20,
                           ),
                         ],
@@ -708,8 +790,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 backgroundColor: Colors.primaries[Random()
                                         .nextInt(Colors.primaries.length)]
                                     .withAlpha(15),
-                                side: BorderSide(
-                                    width: 0.2, color: Colors.grey.shade200),
+                                side: !selectedtags.contains(tagName)
+                                    ? BorderSide(
+                                        width: 0.2, color: Colors.grey.shade200)
+                                    : const BorderSide(
+                                        width: 1, color: Colors.blue),
                                 label: AutoSizeText(
                                   tagName,
                                   minFontSize: 5,
@@ -847,6 +932,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       final overlay =
           Overlay.of(context).context.findRenderObject() as RenderBox;
       final menuItem = await showMenu<int>(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadiusDirectional.circular(20)),
           context: context,
           items: [
             PopupMenuItem(

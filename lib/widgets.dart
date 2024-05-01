@@ -1,7 +1,12 @@
+import 'dart:ui';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:multi_dropdown/multiselect_dropdown.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 
@@ -250,10 +255,6 @@ class FilterSortButtons extends ConsumerWidget {
           await Future.delayed(const Duration(milliseconds: 300));
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(selectedFilterTypeProvider, (previous, newFilter) {
-      if (newFilter != FilterType.byTagName) return;
-      // showModalBottomSheet(context: context, builder: (context) => ,);
-    });
     FilterType selectedFilter = ref.watch(selectedFilterTypeProvider);
     SortType selectedSorting = ref.watch(selectedSortTypeProvider);
     return Row(
@@ -278,9 +279,22 @@ class FilterSortButtons extends ConsumerWidget {
               onTap: () async {
                 //filter by tag name
                 await makeDelay();
-                ref
-                    .read(selectedFilterTypeProvider.notifier)
-                    .updateFilterType(FilterType.byTagName);
+                if (context.mounted) {
+                  await showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) {
+                      return const FilterTagDialog();
+                    },
+                  );
+                } else {
+                  debugPrint(
+                      "Unable to show dialog show to context across async gaps");
+                }
+
+                // ref
+                //     .read(selectedFilterTypeProvider.notifier)
+                //     .updateFilterType(FilterType.byTagName);
               },
               child: IconAndLabel(
                 gap: 7,
@@ -294,6 +308,30 @@ class FilterSortButtons extends ConsumerWidget {
                     // ref.read(selectedFilterTypeProvider),
                     selectedFilter,
                     FilterType.byTagName,
+                  ),
+                ),
+              ),
+            ),
+            PopupMenuItem(
+              onTap: () async {
+                //clear all filters
+                await makeDelay();
+                ref
+                    .read(selectedFilterTypeProvider.notifier)
+                    .updateFilterType(FilterType.starred);
+              },
+              child: IconAndLabel(
+                gap: 7,
+                icon: Icon(
+                  CupertinoIcons.star,
+                  color: Colors.blue.shade600,
+                ),
+                label: Text(
+                  "Starred",
+                  style: selectionBasedStyle(
+                    // ref.read(selectedFilterTypeProvider),
+                    selectedFilter,
+                    FilterType.starred,
                   ),
                 ),
               ),
@@ -468,18 +506,176 @@ class FilterSortButtons extends ConsumerWidget {
   }
 }
 
-class ModalBottomSheetForTagFiltering extends ConsumerStatefulWidget {
-  const ModalBottomSheetForTagFiltering({super.key});
+class CustomCircularProgress extends StatelessWidget {
+  const CustomCircularProgress({
+    super.key,
+  });
 
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _ModalBottomSheetForTagFilteringState();
-}
-
-class _ModalBottomSheetForTagFilteringState
-    extends ConsumerState<ModalBottomSheetForTagFiltering> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return CircularProgressIndicator(
+      color: Colors.blue.shade400,
+      strokeCap: StrokeCap.round,
+      strokeWidth: 5,
+      strokeAlign: 1,
+    );
+  }
+}
+
+class FilterTagDialog extends ConsumerStatefulWidget {
+  const FilterTagDialog({super.key});
+  @override
+  ConsumerState<FilterTagDialog> createState() => _FiltertagDialogState();
+}
+
+class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
+  late bool enableClearAllButton;
+  @override
+  void initState() {
+    super.initState();
+    enableClearAllButton =
+        ref.read(selectedTagListForFilteringProvider).isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    bool isMobile = screenWidth < 600;
+    var allTags = ref.watch(allTagsListProvider);
+    var selectedTags = ref.watch(selectedTagListForFilteringProvider);
+
+    MultiSelectController controller = MultiSelectController();
+    print("\tRight before opening dialog:\nselected tags=$selectedTags");
+    return Dialog(
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: BoxConstraints(
+                minHeight: screenHeight * 0.4,
+                maxWidth: screenWidth * 0.3,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Select the tags to filter: ",
+                    style: TextStyle(fontSize: 23, fontWeight: FontWeight.w400),
+                  ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  allTags.when(
+                    data: (allTagsList) => MultiSelectDropDown(
+                      clearIcon: null,
+                      borderRadius: 25,
+                      padding: const EdgeInsets.all(9),
+                      // searchEnabled: true,
+                      // searchBackgroundColor: Colors.white,
+                      // searchLabel: "Search Tags here...",
+                      inputDecoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(
+                          color: Colors.blue,
+                          width: 2,
+                        ),
+                        gradient: LinearGradient(
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight,
+                            colors: [
+                              Colors.blue.shade50,
+                              Colors.lightBlue.shade200
+                            ]),
+                      ),
+                      hint: "Select Tags",
+                      hintStyle: const TextStyle(fontSize: 14),
+                      hintFontSize: 13.5,
+                      suffixIcon: const Icon(
+                        Icons.arrow_downward,
+                        color: Colors.black54, //Colors.white70
+                      ),
+                      chipConfig: const ChipConfig(
+                        wrapType: WrapType.wrap,
+                        backgroundColor: Colors.blue,
+                        labelStyle: TextStyle(
+                          fontFamily: "DidactGothic",
+                          color: Colors.white,
+                        ),
+                        spacing: 9,
+                        runSpacing: 9,
+                      ),
+                      controller: controller,
+                      dropdownMargin: 2,
+                      onOptionSelected: (selectedOptions) {
+                        // setState(() {
+                        //   enableClearAllButton = selectedOptions.isNotEmpty;
+                        // });
+                        print(
+                            "ON_OPTION_SELECTED ran, enableButton = $enableClearAllButton");
+                      },
+                      selectedOptions: [
+                        for (int i = 0; i < selectedTags.length; i++)
+                          selectedTags[i]
+                      ],
+                      options: [
+                        for (int i = 0; i < allTagsList.length; i++)
+                          allTagsList[i]
+                      ],
+                    ),
+                    error: (error, stackTrace) => Center(
+                      child: Text("Error: , $error\n$stackTrace"),
+                    ),
+                    loading: () => const CustomCircularProgress(),
+                  ),
+                  // const Expanded(child: SizedBox()),
+                  const SizedBox(
+                    height: 200,
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 9,
+                      runSpacing: 9,
+                      children: [
+                        ElevatedButton(
+                            onPressed: () => controller.clearAllSelection(),
+                            // enableClearAllButton
+                            //     ? () {
+                            //         setState(() {
+                            //           controller.clearAllSelection();
+                            //           print(
+                            //               "button pressed, controler status=${controller.selectedOptions}");
+                            //         });
+                            //       }
+                            //     : null,
+                            child: const Text("Clear all")),
+                        ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text("Cancel")),
+                        ElevatedButton(
+                            onPressed: () {
+                              ref
+                                  .read(selectedFilterTypeProvider.notifier)
+                                  .updateFilterType(FilterType.byTagName);
+                              ref
+                                  .read(selectedTagListForFilteringProvider
+                                      .notifier)
+                                  .updateSelectedTags(
+                                      controller.selectedOptions);
+
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Apply Filter")),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 }

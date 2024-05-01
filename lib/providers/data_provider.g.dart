@@ -22,11 +22,12 @@ final getArticleListProvider =
 );
 
 typedef GetArticleListRef = AutoDisposeFutureProviderRef<List<Article>>;
-String _$allTagsListHash() => r'c0c440d0ebf01afeb2f0ef26818227ebccd6e07e';
+String _$allTagsListHash() => r'5446e32b8b8d2aad2bf5a9c8f754d5bd2a03f7f1';
 
 /// See also [allTagsList].
 @ProviderFor(allTagsList)
-final allTagsListProvider = AutoDisposeFutureProvider<List<String>>.internal(
+final allTagsListProvider =
+    AutoDisposeFutureProvider<List<ValueItem<dynamic>>>.internal(
   allTagsList,
   name: r'allTagsListProvider',
   debugGetCreateSourceHash:
@@ -35,9 +36,9 @@ final allTagsListProvider = AutoDisposeFutureProvider<List<String>>.internal(
   allTransitiveDependencies: null,
 );
 
-typedef AllTagsListRef = AutoDisposeFutureProviderRef<List<String>>;
+typedef AllTagsListRef = AutoDisposeFutureProviderRef<List<ValueItem<dynamic>>>;
 String _$filteredAndSortedArticlesHash() =>
-    r'fce20e60349481ea618ef4e17930747732dedeab';
+    r'dddb23b4e505c911c0835222c76d3d692aa4445a';
 
 /// See also [filteredAndSortedArticles].
 @ProviderFor(filteredAndSortedArticles)
@@ -54,13 +55,43 @@ final filteredAndSortedArticlesProvider =
 
 typedef FilteredAndSortedArticlesRef
     = AutoDisposeFutureProviderRef<List<Article>>;
+String _$isMobileHash() => r'6fa4ec0ff603690216fb69985997d9fbfd2818bc';
+
+/// See also [IsMobile].
+@ProviderFor(IsMobile)
+final isMobileProvider = AutoDisposeNotifierProvider<IsMobile, bool>.internal(
+  IsMobile.new,
+  name: r'isMobileProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$isMobileHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$IsMobile = AutoDisposeNotifier<bool>;
+String _$selectedTagIndexHash() => r'57dcb18f8e1e41085a6b0d47d1057241b5f2e839';
+
+/// See also [SelectedTagIndex].
+@ProviderFor(SelectedTagIndex)
+final selectedTagIndexProvider =
+    AutoDisposeNotifierProvider<SelectedTagIndex, List<int>>.internal(
+  SelectedTagIndex.new,
+  name: r'selectedTagIndexProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$selectedTagIndexHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SelectedTagIndex = AutoDisposeNotifier<List<int>>;
 String _$selectedTagListForFilteringHash() =>
-    r'8de51cb3d9130d074647f389014135ef3da7c250';
+    r'c3d8cb31fdbb2188e7c8f6487ac46a8ac5f9f80a';
 
 /// See also [SelectedTagListForFiltering].
 @ProviderFor(SelectedTagListForFiltering)
-final selectedTagListForFilteringProvider = AutoDisposeNotifierProvider<
-    SelectedTagListForFiltering, List<String>>.internal(
+final selectedTagListForFilteringProvider = NotifierProvider<
+    SelectedTagListForFiltering, List<ValueItem<dynamic>>>.internal(
   SelectedTagListForFiltering.new,
   name: r'selectedTagListForFilteringProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -70,7 +101,7 @@ final selectedTagListForFilteringProvider = AutoDisposeNotifierProvider<
   allTransitiveDependencies: null,
 );
 
-typedef _$SelectedTagListForFiltering = AutoDisposeNotifier<List<String>>;
+typedef _$SelectedTagListForFiltering = Notifier<List<ValueItem<dynamic>>>;
 String _$selectedSortTypeHash() => r'd29a9a623f043c98f2efefb7fa2ed0c745465de5';
 
 /// See also [SelectedSortType].

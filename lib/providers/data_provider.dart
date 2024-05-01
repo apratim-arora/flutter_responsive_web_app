@@ -1,6 +1,14 @@
+import 'package:multi_dropdown/multiselect_dropdown.dart';
 import 'package:responsive_1/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'data_provider.g.dart';
+
+@riverpod
+class IsMobile extends _$IsMobile {
+  @override
+  bool build() => false;
+  void init(double width) => state = width > 600;
+}
 
 @riverpod
 Future<List<Article>> getArticleList(GetArticleListRef ref) async {
@@ -9,24 +17,42 @@ Future<List<Article>> getArticleList(GetArticleListRef ref) async {
 }
 
 @riverpod
-Future<List<String>> allTagsList(AllTagsListRef ref) async {
+Future<List<ValueItem<dynamic>>> allTagsList(AllTagsListRef ref) async {
   List<Article> articleList = await ref.watch(getArticleListProvider.future);
-  Set<String> tags = Set.from(
-      articleList.map((article) => article.tags.map((tagName) => tagName)));
-  return tags.toList();
+  Set<String> tagsString = {};
+  for (var article in articleList) {
+    tagsString.addAll(article.tags);
+  }
+
+  ///
+  List<ValueItem<dynamic>> items = <ValueItem<dynamic>>[];
+  for (var tag in tagsString) {
+    items.add(ValueItem(label: tag, value: tag));
+  }
+  return items;
 }
 
-// final selectedTagListProvider =
-//     StateProvider<List<String>>((ref) => <String>[]);
-// final filterTypeProvider = StateProvider<FilterType>((ref) => FilterType.none);
-// final sortTypeProvider =
-//     StateProvider<SortType>((ref) => SortType.dateNewestFirst);
-
 @riverpod
+class SelectedTagIndex extends _$SelectedTagIndex {
+  @override
+  List<int> build() => <int>[];
+  void updateSelectedTags(List<int> newIndexList) => state = newIndexList;
+}
+
+@Riverpod(keepAlive: true)
 class SelectedTagListForFiltering extends _$SelectedTagListForFiltering {
   @override
-  List<String> build() => [];
-  void updateSelectedTags(List<String> newList) => state = newList;
+  List<ValueItem<dynamic>> build() {
+    print("SELECTED_TAG_LIST_PROVIDER USING DEFAULT VALUE [] empty list");
+    return [];
+  }
+
+  void updateSelectedTags(List<ValueItem<dynamic>> newList) {
+    var oldState = state;
+    state = newList;
+    print(
+        "SELECTED_TAG_LIST_PROVIDER updated in provider from $oldState to $newList");
+  }
 }
 
 @riverpod
@@ -46,21 +72,27 @@ class SelectedFilterType extends _$SelectedFilterType {
 @riverpod
 Future<List<Article>> filteredAndSortedArticles(
     FilteredAndSortedArticlesRef ref) async {
-  final FilterType filter = ref.watch(selectedFilterTypeProvider);
-  final SortType sort = ref.watch(selectedSortTypeProvider);
+  FilterType filter = ref.watch(selectedFilterTypeProvider);
+  SortType sort = ref.watch(selectedSortTypeProvider);
   List<Article> currentList = await ref.watch(getArticleListProvider.future);
+  List<ValueItem> selectedtags = ref.watch(selectedTagListForFilteringProvider);
   //filtering
 
   switch (filter) {
     case FilterType.byTagName:
       {
-        List<String> selectedtags =
-            ref.read(selectedTagListForFilteringProvider);
-        print("selected tags for filtering: $selectedtags");
+        if (selectedtags.isEmpty) {
+          ref
+              .read(selectedFilterTypeProvider.notifier)
+              .updateFilterType(FilterType.none);
+          break;
+        }
+        print(
+            "\tFrom Inside provider for applied filtered list:\nselected tags for filtering: $selectedtags");
         print("all tags available from data: $allTags");
         currentList = currentList
             .where((article) =>
-                selectedtags.any((tag) => article.tags.contains(tag)))
+                selectedtags.any((tag) => article.tags.contains(tag.value)))
             .toList();
       }
     case FilterType.starred:
