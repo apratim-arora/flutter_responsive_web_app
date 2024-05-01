@@ -211,7 +211,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           //   child: FilterSortButtons(),
                           // ),
                           data.when(
-                            data: (data) => articleListFunction(data),
+                            data: (data) => data.isNotEmpty
+                                ? articleListFunction(data)
+                                : const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 250.0),
+                                      child: Text(
+                                        "Nothing to Show! ;)",
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
                             error: (error, stackTrace) => Center(
                               child: Text("Error: $error"),
                             ),
@@ -253,21 +264,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                   width: 0.5, color: Colors.blue[200]!),
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 5),
-                              backgroundColor: Colors.blue[50],
+                              backgroundColor: Colors.white70,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(7),
                               ),
                             ),
                             onPressed: () {},
-                            icon: Icon(
+                            icon: const Icon(
                               CupertinoIcons.add,
-                              color: Colors.blue[400],
+                              color: Colors.deepPurple,
                               size: 16,
                             ),
-                            label: Text(
+                            label: const Text(
                               "Create new",
                               style: TextStyle(
-                                  color: Colors.blue[300], fontSize: 11),
+                                  color: Colors.deepPurple, fontSize: 13),
                             ),
                           ),
                         ),

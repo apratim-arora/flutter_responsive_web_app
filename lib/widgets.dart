@@ -336,36 +336,37 @@ class FilterSortButtons extends ConsumerWidget {
                 ),
               ),
             ),
-            PopupMenuItem(
-              onTap: () async {
-                //clear all filters
-                await makeDelay();
-                ref
-                    .read(selectedFilterTypeProvider.notifier)
-                    .updateFilterType(FilterType.none);
-              },
-              child: IconAndLabel(
-                gap: 7,
-                icon: Icon(
-                  CupertinoIcons.xmark,
-                  color: Colors.blue.shade600,
-                ),
-                label: Text(
-                  "No Filters",
-                  style: selectionBasedStyle(
-                    // ref.read(selectedFilterTypeProvider),
-                    selectedFilter,
-                    FilterType.none,
-                  ),
-                ),
-              ),
-            ),
+            // PopupMenuItem(
+            //   onTap: () async {
+            //     //clear all filters
+            //     await makeDelay();
+            //     ref
+            //         .read(selectedFilterTypeProvider.notifier)
+            //         .updateFilterType(FilterType.none);
+            //   },
+            //   child: IconAndLabel(
+            //     gap: 7,
+            //     icon: Icon(
+            //       CupertinoIcons.xmark,
+            //       color: Colors.blue.shade600,
+            //     ),
+            //     label: Text(
+            //       "No Filters",
+            //       style: selectionBasedStyle(
+            //         // ref.read(selectedFilterTypeProvider),
+            //         selectedFilter,
+            //         FilterType.none,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
+          //TODO
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               side: BorderSide(width: 0.5, color: Colors.blue[200]!),
               padding: const EdgeInsets.symmetric(horizontal: 5),
-              backgroundColor: Colors.blue[50],
+              backgroundColor: Colors.white70,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(7),
@@ -375,13 +376,16 @@ class FilterSortButtons extends ConsumerWidget {
             ),
             onPressed: null,
             icon: Icon(
-              CupertinoIcons.slider_horizontal_3,
-              color: Colors.blue[400],
+              Icons.filter_alt_sharp,
+              color: Colors.deepPurple[400],
               size: 16,
             ),
-            label: Text(
-              "Filter by",
-              style: TextStyle(color: Colors.blue[300], fontSize: 11),
+            label: const Text(
+              "Filter",
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontSize: 13,
+              ),
             ),
           ),
         ),
@@ -477,11 +481,12 @@ class FilterSortButtons extends ConsumerWidget {
               },
             ),
           ],
+          //TODO
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               side: BorderSide(width: 0.5, color: Colors.blue[200]!),
               padding: const EdgeInsets.symmetric(horizontal: 5),
-              backgroundColor: Colors.blue[50],
+              backgroundColor: Colors.white70,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(7),
@@ -490,14 +495,17 @@ class FilterSortButtons extends ConsumerWidget {
               ),
             ),
             onPressed: null,
-            icon: Icon(
+            icon: const Icon(
               CupertinoIcons.arrow_up_arrow_down,
-              color: Colors.blue[400],
+              color: Colors.deepPurple,
               size: 15,
             ),
-            label: Text(
-              "Sort by",
-              style: TextStyle(color: Colors.blue[300], fontSize: 11),
+            label: const Text(
+              "Sort",
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontSize: 13,
+              ),
             ),
           ),
         ),
@@ -537,6 +545,13 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
         ref.read(selectedTagListForFilteringProvider).isNotEmpty;
   }
 
+  MultiSelectController controller = MultiSelectController();
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -545,7 +560,6 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
     var allTags = ref.watch(allTagsListProvider);
     var selectedTags = ref.watch(selectedTagListForFilteringProvider);
 
-    MultiSelectController controller = MultiSelectController();
     print("\tRight before opening dialog:\nselected tags=$selectedTags");
     return Dialog(
         elevation: 0,
@@ -571,37 +585,46 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
                     data: (allTagsList) => MultiSelectDropDown(
                       clearIcon: null,
                       borderRadius: 25,
-                      padding: const EdgeInsets.all(9),
+                      padding: const EdgeInsets.fromLTRB(9, 9, 20, 9),
                       // searchEnabled: true,
                       // searchBackgroundColor: Colors.white,
                       // searchLabel: "Search Tags here...",
                       inputDecoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                        gradient: LinearGradient(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            spreadRadius: 0,
+                            blurRadius: 15,
+                            offset: const Offset(
+                                0, 5), // Shadow moved to the right and bottom
+                          )
+                        ],
+                        gradient: const LinearGradient(
                             begin: Alignment.bottomLeft,
                             end: Alignment.topRight,
                             colors: [
-                              Colors.blue.shade50,
-                              Colors.lightBlue.shade200
+                              Color.fromARGB(157, 255, 127, 80),
+                              Color.fromARGB(139, 194, 129, 255),
                             ]),
                       ),
                       hint: "Select Tags",
-                      hintStyle: const TextStyle(fontSize: 14),
-                      hintFontSize: 13.5,
-                      suffixIcon: const Icon(
-                        Icons.arrow_downward,
-                        color: Colors.black54, //Colors.white70
+                      hintStyle:
+                          TextStyle(fontSize: 14.5, color: Colors.grey[50]),
+                      hintPadding: const EdgeInsets.only(left: 20),
+                      suffixIcon: Icon(
+                        Icons.arrow_downward_sharp,
+                        color: Colors.grey[50], //Colors.white70
                       ),
+
                       chipConfig: const ChipConfig(
+                        deleteIconColor: Colors.white,
                         wrapType: WrapType.wrap,
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Color(0xffD7A3A8), //Color(0xffD2A2B2),
                         labelStyle: TextStyle(
-                          fontFamily: "DidactGothic",
+                          // fontFamily: "DidactGothic",
                           color: Colors.white,
+                          // fontWeight: FontWeight.bold,
                         ),
                         spacing: 9,
                         runSpacing: 9,
@@ -646,6 +669,7 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
                             //     ? () {
                             //         setState(() {
                             //           controller.clearAllSelection();
+                            //           enableClearAllButton = false;
                             //           print(
                             //               "button pressed, controler status=${controller.selectedOptions}");
                             //         });
