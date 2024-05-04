@@ -20,14 +20,15 @@ import 'package:url_launcher/url_launcher.dart';
 Alignment stockImageAndTextAlignment(double width, double height, bool isImage,
     {bool isMobile = false}) {
   late Alignment image, text;
+  late Alignment mobileImage, mobileText;
   //Mobile:
   if (isMobile) {
     if (isImage) {
-      image = const Alignment(0, -0.234);
+      mobileImage = const Alignment(0, -0.234);
     } else {
-      text = const Alignment(0, 0.234);
+      mobileText = const Alignment(0, 0.234);
     }
-    return isImage ? image : text;
+    return isImage ? mobileImage : mobileText;
   }
 
   //Desktop:
@@ -91,7 +92,7 @@ class PriorityViewEmptyWidget extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       double width = constraints.maxWidth;
       double height = constraints.maxHeight;
-      bool isMobile = width < 588;
+      bool isMobile = MediaQuery.of(context).size.width < 588;
       return Opacity(
         opacity: 0.15,
         child: Stack(
@@ -159,7 +160,7 @@ class FolderViewEmptyWidget extends StatelessWidget {
       builder: (context, constraints) {
         double width = constraints.maxWidth;
         double height = constraints.maxHeight;
-        bool isMobile = width < 588;
+        bool isMobile = MediaQuery.of(context).size.width < 588;
         return Center(
           child: Opacity(
             opacity: 0.15,
