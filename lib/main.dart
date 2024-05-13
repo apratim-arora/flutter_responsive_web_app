@@ -124,7 +124,7 @@ class MobileView extends StatelessWidget {
     //Folder view
     MobileSplitContainer(
       heading: "Folder View",
-      iconData: CupertinoIcons.list_bullet_below_rectangle,
+      iconData: CupertinoIcons.folder,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -161,7 +161,7 @@ class MobileView extends StatelessWidget {
     //Priority View
     const MobileSplitContainer(
       heading: "Priority View",
-      iconData: CupertinoIcons.list_bullet_below_rectangle,
+      iconData: CupertinoIcons.text_badge_checkmark,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,

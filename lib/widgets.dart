@@ -626,31 +626,32 @@ class FilterSortButtons extends ConsumerWidget {
                 ),
               ),
             ),
-            // if (ref.read(selectedFilterTypeProvider) != FilterType.none)
-            //   PopupMenuItem(
-            //     onTap: () async {
-            //       //clear all filters
-            //       await makeDelay();
-            //       ref
-            //           .read(selectedFilterTypeProvider.notifier)
-            //           .updateFilterType(FilterType.none);
-            //     },
-            //     child: IconAndLabel(
-            //       gap: 7,
-            //       icon: Icon(
-            //         CupertinoIcons.xmark,
-            //         color: Colors.blue.shade600,
-            //       ),
-            //       label: Text(
-            //         "Clear Filters",
-            //         style: selectionBasedStyle(
-            //           // ref.read(selectedFilterTypeProvider),
-            //           selectedFilter,
-            //           FilterType.none,
-            //         ),
-            //       ),
-            //     ),
-            //   )
+            if (ref.read(selectedFilterTypeProvider) != FilterType.none &&
+                isMobile)
+              PopupMenuItem(
+                onTap: () async {
+                  //clear all filters
+                  await makeDelay();
+                  ref
+                      .read(selectedFilterTypeProvider.notifier)
+                      .updateFilterType(FilterType.none);
+                },
+                child: IconAndLabel(
+                  gap: 7,
+                  icon: Icon(
+                    CupertinoIcons.xmark,
+                    color: Colors.blue.shade600,
+                  ),
+                  label: Text(
+                    "Clear Filters",
+                    style: selectionBasedStyle(
+                      // ref.read(selectedFilterTypeProvider),
+                      selectedFilter,
+                      FilterType.none,
+                    ),
+                  ),
+                ),
+              )
           ],
           //TODO
           child: SizedBox(
