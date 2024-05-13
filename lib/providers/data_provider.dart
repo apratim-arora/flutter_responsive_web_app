@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:multi_dropdown/multiselect_dropdown.dart';
 import 'package:responsive_1/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -39,7 +40,7 @@ class SelectedTagIndex extends _$SelectedTagIndex {
   void updateSelectedTags(List<int> newIndexList) => state = newIndexList;
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class SelectedTagListForFiltering extends _$SelectedTagListForFiltering {
   @override
   List<ValueItem<dynamic>> build() {
@@ -49,7 +50,9 @@ class SelectedTagListForFiltering extends _$SelectedTagListForFiltering {
 
   void updateSelectedTags(List<ValueItem<dynamic>> newList) {
     var oldState = state;
-    state = newList;
+    if (!listEquals(state, newList)) {
+      state = newList;
+    }
     print(
         "SELECTED_TAG_LIST_PROVIDER updated in provider from $oldState to $newList");
   }
@@ -77,6 +80,11 @@ Future<List<Article>> filteredAndSortedArticles(
   List<Article> currentList = await ref.watch(getArticleListProvider.future);
   List<ValueItem> selectedtags = ref.watch(selectedTagListForFilteringProvider);
   //filtering
+  if (filter != FilterType.byTagName && selectedtags.isNotEmpty) {
+    ref
+        .read(selectedTagListForFilteringProvider.notifier)
+        .updateSelectedTags(List.empty());
+  }
 
   switch (filter) {
     case FilterType.byTagName:

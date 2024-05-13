@@ -38,7 +38,7 @@ final allTagsListProvider =
 
 typedef AllTagsListRef = AutoDisposeFutureProviderRef<List<ValueItem<dynamic>>>;
 String _$filteredAndSortedArticlesHash() =>
-    r'dddb23b4e505c911c0835222c76d3d692aa4445a';
+    r'7fc873a7437a80c2173dc4e388281af6c98fc8a5';
 
 /// See also [filteredAndSortedArticles].
 @ProviderFor(filteredAndSortedArticles)
@@ -86,11 +86,11 @@ final selectedTagIndexProvider =
 
 typedef _$SelectedTagIndex = AutoDisposeNotifier<List<int>>;
 String _$selectedTagListForFilteringHash() =>
-    r'c3d8cb31fdbb2188e7c8f6487ac46a8ac5f9f80a';
+    r'8b3de5a78e92f19c70edee33fde54355a1af41c3';
 
 /// See also [SelectedTagListForFiltering].
 @ProviderFor(SelectedTagListForFiltering)
-final selectedTagListForFilteringProvider = NotifierProvider<
+final selectedTagListForFilteringProvider = AutoDisposeNotifierProvider<
     SelectedTagListForFiltering, List<ValueItem<dynamic>>>.internal(
   SelectedTagListForFiltering.new,
   name: r'selectedTagListForFilteringProvider',
@@ -101,7 +101,8 @@ final selectedTagListForFilteringProvider = NotifierProvider<
   allTransitiveDependencies: null,
 );
 
-typedef _$SelectedTagListForFiltering = Notifier<List<ValueItem<dynamic>>>;
+typedef _$SelectedTagListForFiltering
+    = AutoDisposeNotifier<List<ValueItem<dynamic>>>;
 String _$selectedSortTypeHash() => r'd29a9a623f043c98f2efefb7fa2ed0c745465de5';
 
 /// See also [SelectedSortType].

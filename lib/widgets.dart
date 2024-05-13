@@ -626,31 +626,31 @@ class FilterSortButtons extends ConsumerWidget {
                 ),
               ),
             ),
-            if (ref.read(selectedFilterTypeProvider) != FilterType.none)
-              PopupMenuItem(
-                onTap: () async {
-                  //clear all filters
-                  await makeDelay();
-                  ref
-                      .read(selectedFilterTypeProvider.notifier)
-                      .updateFilterType(FilterType.none);
-                },
-                child: IconAndLabel(
-                  gap: 7,
-                  icon: Icon(
-                    CupertinoIcons.xmark,
-                    color: Colors.blue.shade600,
-                  ),
-                  label: Text(
-                    "Clear Filters",
-                    style: selectionBasedStyle(
-                      // ref.read(selectedFilterTypeProvider),
-                      selectedFilter,
-                      FilterType.none,
-                    ),
-                  ),
-                ),
-              )
+            // if (ref.read(selectedFilterTypeProvider) != FilterType.none)
+            //   PopupMenuItem(
+            //     onTap: () async {
+            //       //clear all filters
+            //       await makeDelay();
+            //       ref
+            //           .read(selectedFilterTypeProvider.notifier)
+            //           .updateFilterType(FilterType.none);
+            //     },
+            //     child: IconAndLabel(
+            //       gap: 7,
+            //       icon: Icon(
+            //         CupertinoIcons.xmark,
+            //         color: Colors.blue.shade600,
+            //       ),
+            //       label: Text(
+            //         "Clear Filters",
+            //         style: selectionBasedStyle(
+            //           // ref.read(selectedFilterTypeProvider),
+            //           selectedFilter,
+            //           FilterType.none,
+            //         ),
+            //       ),
+            //     ),
+            //   )
           ],
           //TODO
           child: SizedBox(
@@ -963,7 +963,13 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
                       runSpacing: 9,
                       children: [
                         ElevatedButton(
-                            onPressed: () => controller.clearAllSelection(),
+                            onPressed: () {
+                              controller.clearAllSelection();
+                              ref
+                                  .read(selectedTagListForFilteringProvider
+                                      .notifier)
+                                  .updateSelectedTags(List.empty());
+                            },
                             // enableClearAllButton
                             //     ? () {
                             //         setState(() {
@@ -980,6 +986,7 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
                             child: const Text("Cancel")),
                         ElevatedButton(
                             onPressed: () {
+                              Navigator.of(context).pop();
                               ref
                                   .read(selectedFilterTypeProvider.notifier)
                                   .updateFilterType(FilterType.byTagName);
@@ -988,8 +995,6 @@ class _FiltertagDialogState extends ConsumerState<FilterTagDialog> {
                                       .notifier)
                                   .updateSelectedTags(
                                       controller.selectedOptions);
-
-                              Navigator.of(context).pop();
                             },
                             child: const Text("Apply Filter")),
                       ],

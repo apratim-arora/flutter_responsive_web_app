@@ -124,9 +124,9 @@ int progressGenerator() {
 }
 
 DateTime dateTimeGenerator() {
-  DateTime start = DateTime(2023, 1, 1), end = DateTime.now();
-  var minMilliseconds = start.millisecondsSinceEpoch;
-  var maxMilliseconds = end.millisecondsSinceEpoch;
+  DateTime start = DateTime(2023, 2, 1), end = DateTime(2024, 4, 29);
+  var minMilliseconds = start.millisecondsSinceEpoch.abs();
+  var maxMilliseconds = end.millisecondsSinceEpoch.abs();
   var randomMilliseconds = minMilliseconds +
       rnd.nextInt((maxMilliseconds / 10 - minMilliseconds / 10).toInt());
   int month = rnd.nextInt(11) + 1;
