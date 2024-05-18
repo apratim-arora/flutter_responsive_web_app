@@ -152,5 +152,23 @@ final asyncArticlesProvider =
 );
 
 typedef _$AsyncArticles = AutoDisposeAsyncNotifier<List<Article>>;
+String _$highlightNotifierHash() => r'e98871ce3f97d6cfab910c964018d640424e11ab';
+
+///reader
+///
+/// Copied from [HighlightNotifier].
+@ProviderFor(HighlightNotifier)
+final highlightNotifierProvider = AutoDisposeNotifierProvider<HighlightNotifier,
+    Map<String, List<Highlight>>>.internal(
+  HighlightNotifier.new,
+  name: r'highlightNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$highlightNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$HighlightNotifier = AutoDisposeNotifier<Map<String, List<Highlight>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

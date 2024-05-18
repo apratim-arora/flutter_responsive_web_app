@@ -1,6 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+class Highlight {
+  final String uuid;
+  final TextRange range;
+  final Color color;
+
+  Highlight({required this.uuid, required this.range, required this.color});
+}
+
 class Article {
   final String title, description, url;
   DateTime dateTimeAdded;

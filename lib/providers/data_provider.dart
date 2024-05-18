@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:multi_dropdown/multiselect_dropdown.dart';
 import 'package:responsive_1/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -152,5 +153,64 @@ class AsyncArticles extends _$AsyncArticles {
     prevState.removeAt(index);
     article.isFavouite = !article.isFavouite;
     state = AsyncData([...prevState, article]);
+  }
+}
+
+///reader
+@riverpod
+class HighlightNotifier extends _$HighlightNotifier {
+  @override
+  Map<String, List<Highlight>> build() {
+    return {};
+  }
+  // void setHighlights( List<Highlight> highlights) {
+  //   state = highlights;
+  // }
+
+  void removeHighlight(TextRange range) {
+    final newState = Map.of(state);
+    newState.remove(range);
+    state = newState;
+  }
+
+  void addHighlight(String uuid, TextRange range, Color color) {
+    final highlight = Highlight(range: range, color: color, uuid: uuid);
+    if (state.containsKey(uuid)) {
+      state = {
+        ...state,
+        uuid: _mergeHighlight(state[uuid]!, highlight),
+      };
+    } else {
+      state = {
+        ...state,
+        uuid: [highlight],
+      };
+    }
+  }
+
+  List<Highlight> _mergeHighlight(
+      List<Highlight> existingHighlights, Highlight newHighlight) {
+    final mergedHighlights = <Highlight>[];
+
+    for (var highlight in existingHighlights) {
+      if (highlight.range.end < newHighlight.range.start ||
+          highlight.range.start > newHighlight.range.end) {
+        mergedHighlights.add(highlight);
+      } else {
+        final start = highlight.range.start < newHighlight.range.start
+            ? highlight.range.start
+            : newHighlight.range.start;
+        final end = highlight.range.end > newHighlight.range.end
+            ? highlight.range.end
+            : newHighlight.range.end;
+        newHighlight = Highlight(
+            range: TextRange(start: start, end: end),
+            color: newHighlight.color,
+            uuid: newHighlight.uuid);
+      }
+    }
+
+    mergedHighlights.add(newHighlight);
+    return mergedHighlights;
   }
 }

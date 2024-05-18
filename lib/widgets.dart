@@ -1,9 +1,13 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:animate_gradient/animate_gradient.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +17,8 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/my_expansion_panel_widget.dart';
 import 'package:responsive_1/providers/data_provider.dart';
+import 'package:responsive_1/reader_widget.dart';
+import 'package:split_view/split_view.dart';
 import 'package:universal_html/html.dart' as my_html;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1126,7 +1132,7 @@ class MobileAppBar extends StatelessWidget {
               //     ),
               //   ),
               // ),
-              const SizedBox(width: 11),
+              // const SizedBox(width: 11),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1225,13 +1231,21 @@ class GlassContainer extends StatelessWidget {
     Key? key,
     required this.child,
     this.topBorderRadius,
+    this.padding,
+    this.margin,
+    this.allowBottomRadius = false,
   }) : super(key: key);
   final Widget child;
   final double? topBorderRadius;
+  final bool allowBottomRadius;
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: padding,
+      margin: margin,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1246,7 +1260,14 @@ class GlassContainer extends StatelessWidget {
         borderRadius: topBorderRadius != null
             ? BorderRadius.only(
                 topLeft: Radius.circular(topBorderRadius!),
-                topRight: Radius.circular(topBorderRadius!))
+                topRight: Radius.circular(topBorderRadius!),
+                bottomLeft: allowBottomRadius
+                    ? Radius.circular(topBorderRadius!)
+                    : Radius.zero,
+                bottomRight: allowBottomRadius
+                    ? Radius.circular(topBorderRadius!)
+                    : Radius.zero,
+              )
             : const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1332,9 +1353,12 @@ class _MyExpansionPanelListWidgetState
     my_html.document.onContextMenu.listen((event) => event.preventDefault());
   }
 
+  late bool isMobile;
+
   @override
   Widget build(BuildContext context) {
     var data = ref.watch(filteredAndSortedArticlesProvider);
+    isMobile = MediaQuery.of(context).size.width < 600;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(right: 5),
@@ -1392,6 +1416,7 @@ class _MyExpansionPanelListWidgetState
 
   MyExpansionPanelRadio expansionPanelRadioWidget(
       Article article, List<dynamic> selectedtags) {
+    // final statesController = MaterialStatesController();
     AutoSizeGroup autoSizeGroupInstance1 = AutoSizeGroup();
     return MyExpansionPanelRadio(
         value: article,
@@ -1577,6 +1602,7 @@ class _MyExpansionPanelListWidgetState
                             },
                             icon: article.isFavouite
                                 ?
+                                //Gradient Icon
                                 // ShaderMask(
                                 //     blendMode: BlendMode.srcIn,
                                 //     shaderCallback: (bounds) =>
@@ -1617,41 +1643,99 @@ class _MyExpansionPanelListWidgetState
           children: [
             ExpandedBodyRowItem(
               title: "URL",
-              content: InkWell(
-                onTap: () => _launchUrl(article.url, context),
-                child: Row(
-                  children: [
-                    Flexible(
-                      flex: 100,
-                      child: AutoSizeText(
-                        article.url.length > 40
-                            ? "${article.url.substring(0, 40)}..."
-                            : article.url,
-                        minFontSize: 12,
-                        maxFontSize: 14,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
-                        wrapWords: false,
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
-                          fontFamily: "DidactGothic",
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 15,
+                    child: InkWell(
+                      onTap: () => _launchUrl(article.url, context),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            flex: 100,
+                            child: AutoSizeText(
+                              article.url.length > 40
+                                  ? "${article.url.substring(0, 40)}..."
+                                  : article.url,
+                              minFontSize: 12,
+                              maxFontSize: 14,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                              wrapWords: false,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                                fontFamily: "DidactGothic",
+                              ),
+                            ),
+                          ),
+                          if (!isMobile)
+                            const Flexible(flex: 2, child: SizedBox(width: 3)),
+                          Flexible(
+                              flex: 5,
+                              child: FittedBox(
+                                child: Icon(
+                                  CupertinoIcons.arrow_up_right_square,
+                                  size: 16,
+                                  color: Colors.blue[600],
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Flexible(
+                      child: SizedBox(
+                    width: 5,
+                  )),
+                  Flexible(
+                    flex: 5,
+                    // height: 25,
+                    child: FittedBox(
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(7.0),
+                          color: Colors.white54,
+                          gradient: const LinearGradient(
+                              colors: [
+                                Color(0xfff9ce34),
+                                Color.fromARGB(187, 238, 42, 124),
+                                Color.fromARGB(169, 110, 66, 198),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight),
+                        ),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ReaderScreen(article)));
+                          },
+                          // statesController: statesController,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(style: BorderStyle.none),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7.0)),
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                            ),
+                          ),
+                          child: const Text(
+                            "Read here",
+                            style:
+                                TextStyle(color: Color.fromRGBO(66, 66, 66, 1)),
+                          ),
                         ),
                       ),
                     ),
-                    const Flexible(flex: 2, child: SizedBox(width: 5)),
-                    Flexible(
-                        flex: 5,
-                        child: FittedBox(
-                          child: Icon(
-                            CupertinoIcons.arrow_up_right_square,
-                            size: 16,
-                            color: Colors.blue[600],
-                          ),
-                        ))
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             ExpandedBodyRowItem(

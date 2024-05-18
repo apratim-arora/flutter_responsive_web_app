@@ -3,8 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:responsive_1/models.dart';
 import 'package:responsive_1/widgets.dart';
 import 'package:split_view/split_view.dart';
+
+import 'reader_widget.dart';
 // import 'package:universal_html/html.dart' as my_html;
 
 void main() => runApp(const ProviderScope(child: MyApp()));
@@ -34,14 +37,26 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Productivity App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: "Poppins",
-      ),
-      home: const MyHomePage(title: 'Productivity'),
-    );
+        debugShowCheckedModeBanner: false,
+        title: 'Productivity App',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          fontFamily: "Poppins",
+        ),
+        home: ReaderScreen(Article(
+          title: "The Article Title",
+          description:
+              "Some long article description Some long article description Some long article description Some long article description Some long article description ",
+          url: "http://abc.xyz",
+          dateTimeAdded: DateTime(2023, 2, 21),
+          priority: Priority.high,
+          tags: ["UI/UX", "Business", "IT", "Graphics"],
+          estCompletionTime: const Duration(minutes: 155),
+          folderPath: ["Important", "Notes", "2022"],
+          progress: 39,
+        ))
+        //const MyHomePage(title: 'Productivity'),
+        );
   }
 }
 
