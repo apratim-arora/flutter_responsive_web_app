@@ -1,12 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:video_player/video_player.dart';
 
-class DirectVideoPlayer extends ConsumerStatefulWidget {
+class DirectVideoPlayer extends StatefulWidget {
   final String url;
   final String articleId;
   final String videoUuid;
@@ -20,10 +19,10 @@ class DirectVideoPlayer extends ConsumerStatefulWidget {
   DirectVideoPlayerState createState() => DirectVideoPlayerState();
 }
 
-class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
+class DirectVideoPlayerState extends State<DirectVideoPlayer> {
   late VideoPlayerController _controller;
   late String articleId, videoUuid;
-  // int i = 0;
+  int i = 0;
 
   @override
   void initState() {
@@ -33,23 +32,8 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize().then((_) {
         setState(() {});
-      })
-      ..addListener(_updateWatchedProgress);
-  }
-
-  void _updateWatchedProgress() {
-    //bug in library causing toggle icon play/pause updating problems with below if statement
-    //wrote to update screen(provider) less frequently than every second.
-    // if (i % 5 == 0) {
-    final position = _controller.value.position;
-    final duration = _controller.value.duration;
-    ref
-        .read(videoProgressProvider(articleId).notifier)
-        .updateVideoProgress(videoUuid, position, duration);
-
-    debugPrint("UPDATED VIDEO PROGRESS: $position");
-    // }
-    // i++;
+      });
+    // ..addListener(_updateWatchedProgress);
   }
 
   @override
@@ -67,7 +51,11 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
                       VideoPlayer(_controller),
                       // ClosedCaption(text: _controller.value.caption.text),
                       _ControlsOverlay(
-                          controller: _controller, isFullScreen: false),
+                        articleId: articleId,
+                        videoUuid: videoUuid,
+                        controller: _controller,
+                        isFullScreen: false,
+                      ),
                       VideoProgressIndicator(_controller, allowScrubbing: true),
                     ],
                   ),
@@ -84,16 +72,19 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
 
   @override
   void dispose() {
-    _controller.removeListener(_updateWatchedProgress);
+    // _controller.removeListener(_updateWatchedProgress);
     _controller.dispose();
     // progressSavingTimer.cancel();
     super.dispose();
   }
 }
 
-class _ControlsOverlay extends StatelessWidget {
+class _ControlsOverlay extends ConsumerStatefulWidget {
   const _ControlsOverlay(
-      {required this.controller, required this.isFullScreen});
+      {required this.articleId,
+      required this.videoUuid,
+      required this.controller,
+      required this.isFullScreen});
 
   // static const List<Duration> _exampleCaptionOffsets = <Duration>[
   //   Duration(seconds: -10),
@@ -116,9 +107,50 @@ class _ControlsOverlay extends StatelessWidget {
     2.5,
     3.0,
   ];
-
+  final String articleId, videoUuid;
   final VideoPlayerController controller;
   final bool isFullScreen;
+
+  @override
+  ConsumerState<_ControlsOverlay> createState() => _ControlsOverlayState();
+}
+
+class _ControlsOverlayState extends ConsumerState<_ControlsOverlay> {
+  int i = 0;
+  void _togglePlay() {
+    setState(() {
+      widget.controller.value.isPlaying
+          ? widget.controller.pause()
+          : widget.controller.play();
+    });
+  }
+
+  void _updateWatchedProgress() {
+    setState(() {});
+    if (i % 5 == 0) {
+      final position = widget.controller.value.position;
+      final duration = widget.controller.value.duration;
+      ref
+          .read(videoProgressProvider(widget.articleId).notifier)
+          .updateVideoProgress(widget.videoUuid, position, duration);
+
+      debugPrint("UPDATED VIDEO PROGRESS: $position");
+    }
+    i++;
+  }
+
+  @override
+  void initState() {
+    widget.controller.addListener(_updateWatchedProgress);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_updateWatchedProgress);
+    widget.controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +159,7 @@ class _ControlsOverlay extends StatelessWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 50),
           reverseDuration: const Duration(milliseconds: 200),
-          child: controller.value.isPlaying
+          child: widget.controller.value.isPlaying
               ? const SizedBox.shrink()
               : const ColoredBox(
                   color: Colors.black26,
@@ -142,9 +174,7 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
         ),
         GestureDetector(
-          onTap: () {
-            controller.value.isPlaying ? controller.pause() : controller.play();
-          },
+          onTap: () => _togglePlay(),
         ),
         Align(
             alignment: Alignment.bottomLeft,
@@ -159,13 +189,7 @@ class _ControlsOverlay extends StatelessWidget {
                       horizontal: 9,
                     ),
                     child: InkWell(
-                      onTap: () {
-                        if (controller.value.isPlaying) {
-                          controller.pause();
-                        } else {
-                          controller.play();
-                        }
-                      },
+                      onTap: () => _togglePlay(),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 1.5),
@@ -174,7 +198,7 @@ class _ControlsOverlay extends StatelessWidget {
                             color: Colors.black54,
                             border: Border.all(color: Colors.white60)),
                         child: Icon(
-                          controller.value.isPlaying
+                          widget.controller.value.isPlaying
                               ? Icons.pause
                               : Icons.play_arrow,
                           size: 21,
@@ -192,7 +216,7 @@ class _ControlsOverlay extends StatelessWidget {
                       color: Colors.black54,
                     ),
                     child: Text(
-                      "${getFormattedDurationForVideo(controller.value.position)}/${getFormattedDurationForVideo(controller.value.duration)}",
+                      "${getFormattedDurationForVideo(widget.controller.value.position)}/${getFormattedDurationForVideo(widget.controller.value.duration)}",
                       style:
                           const TextStyle(color: Colors.white54, fontSize: 12),
                     ))
@@ -209,15 +233,16 @@ class _ControlsOverlay extends StatelessWidget {
                     Radius.circular(9.0),
                   ),
                 ),
-                initialValue: controller.value.playbackSpeed,
+                initialValue: widget.controller.value.playbackSpeed,
                 tooltip: 'Playback speed',
                 onSelected: (double speed) {
-                  controller.setPlaybackSpeed(speed);
+                  widget.controller.setPlaybackSpeed(speed);
                 },
                 position: PopupMenuPosition.over,
                 itemBuilder: (BuildContext context) {
                   return <PopupMenuItem<double>>[
-                    for (final double speed in examplePlaybackRates)
+                    for (final double speed
+                        in _ControlsOverlay.examplePlaybackRates)
                       PopupMenuItem<double>(
                         value: speed,
                         child: Text('${speed}x'),
@@ -234,25 +259,28 @@ class _ControlsOverlay extends StatelessWidget {
                       color: Colors.black54,
                       border: Border.all(color: Colors.white60)),
                   child: Text(
-                    '${controller.value.playbackSpeed}x',
+                    '${widget.controller.value.playbackSpeed}x',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ),
               ),
               Tooltip(
-                message:
-                    !isFullScreen ? "Go FullScreen" : "Back to mini player",
+                message: !widget.isFullScreen
+                    ? "Go FullScreen"
+                    : "Back to mini player",
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 7,
                     horizontal: 9,
                   ),
                   child: InkWell(
-                    onTap: () => !isFullScreen
+                    onTap: () => !widget.isFullScreen
                         ? Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => _FullVideoScreenPlayer(
-                              url: controller.dataSource,
-                              position: controller.value.position,
+                              articleId: widget.articleId,
+                              videoUuid: widget.videoUuid,
+                              url: widget.controller.dataSource,
+                              position: widget.controller.value.position,
                             ),
                           ))
                         : Navigator.pop(context),
@@ -263,7 +291,7 @@ class _ControlsOverlay extends StatelessWidget {
                           borderRadius: BorderRadius.circular(9),
                           color: Colors.black54,
                           border: Border.all(color: Colors.white60)),
-                      child: !isFullScreen
+                      child: !widget.isFullScreen
                           ? const Icon(
                               Icons.fullscreen,
                               size: 21,
@@ -288,7 +316,12 @@ class _ControlsOverlay extends StatelessWidget {
 
 class _FullVideoScreenPlayer extends StatefulWidget {
   final String url;
-  const _FullVideoScreenPlayer({required this.url, required this.position});
+  final String articleId, videoUuid;
+  const _FullVideoScreenPlayer(
+      {required this.url,
+      required this.position,
+      required this.articleId,
+      required this.videoUuid});
   final Duration? position;
   @override
   _FullVideoScreenPlayerState createState() => _FullVideoScreenPlayerState();
@@ -350,7 +383,10 @@ class _FullVideoScreenPlayerState extends State<_FullVideoScreenPlayer> {
                     VideoPlayer(videoPlayerController),
                     // ClosedCaption(text: _controller.value.caption.text),
                     _ControlsOverlay(
-                        controller: videoPlayerController, isFullScreen: true),
+                        articleId: widget.articleId,
+                        videoUuid: widget.videoUuid,
+                        controller: videoPlayerController,
+                        isFullScreen: true),
                     VideoProgressIndicator(videoPlayerController,
                         allowScrubbing: true),
                   ],
