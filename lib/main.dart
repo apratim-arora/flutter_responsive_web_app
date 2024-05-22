@@ -44,6 +44,7 @@ class MyApp extends StatelessWidget {
           fontFamily: "Poppins",
         ),
         home: ReaderScreen(Article(
+          id: "random_id",
           title: "The Article Title",
           description:
               "Some long article description Some long article description Some long article description Some long article description Some long article description ",
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, this.title}) : super(key: key);
+  const MyHomePage({super.key, this.title});
 
   final String? title;
 

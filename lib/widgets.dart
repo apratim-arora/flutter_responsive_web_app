@@ -1,13 +1,9 @@
 import 'dart:math';
 import 'dart:ui';
-import 'package:animate_gradient/animate_gradient.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -18,9 +14,9 @@ import 'package:responsive_1/models.dart';
 import 'package:responsive_1/my_expansion_panel_widget.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:responsive_1/reader_widget.dart';
-import 'package:split_view/split_view.dart';
 import 'package:universal_html/html.dart' as my_html;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 //functions
 Alignment stockImageAndTextAlignment(double width, double height, bool isImage,

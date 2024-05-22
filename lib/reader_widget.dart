@@ -1,23 +1,55 @@
 import 'package:animate_gradient/animate_gradient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
+import 'package:responsive_1/video_widgets.dart';
 import 'package:uuid/uuid.dart';
-
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
 import 'widgets.dart';
 
 class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen(this.article, {super.key});
   final Article article;
   final String htmlContent = '''
-  <html><body><article><h1>Thunder (mascot)</h1></article></body></html>
-  <p>Thunder is the stage name
-   for the horse who is the official live animal mascot for the Denver Broncos</p>
-   <h2>A smaller heading</h2>
-   <p> The paragraph of <b>Smaller</b> heading.</p>
-  ''';
+<html>
+<body>
+  <article>
+    <h1>Sample Article</h1>
+    <p>This is a paragraph with <b>bold text</b> and <i>italic text</i>.</p>
+    <h2>List Example</h2>
+    <ul>
+      <li>List item 1</li>
+      <li>List item 2</li>
+      <li>List item 3</li>
+    </ul>
+    <h2>Table Example</h2>
+    <table border="1">
+      <tr>
+        <th>Header 1</th>
+        <th>Header 2</th>
+      </tr>
+      <tr>
+        <td>Data 1</td>
+        <td>Data 2</td>
+      </tr>
+    </table>
+    <h2>Image Example</h2>
+    <p><img src="https://hips.hearstapps.com/hmg-prod/images/bright-forget-me-nots-royalty-free-image-1677788394.jpg" alt="Flowers image"></p>
+    <h2>Video Example</h2>
+    <p><iframe width="420" height="345" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></p>
+    <video width="320" height="240" controls>
+  <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  <figcaption> Hello World</figcaption>
+</video>
+  </article>
+</body>
+</html>
+''';
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _ReaderScreenState();
@@ -27,6 +59,51 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   TextSelection? _selection;
   String? _selectedUuid;
   final Uuid uuid = const Uuid();
+
+  String removeInlineTags(String htmlContent) {
+    // Parse the HTML content
+    final document = html_parser.parse(htmlContent);
+
+    // Function to recursively process each node
+    String processNode(dom.Node node) {
+      // If it's an element and not a text node
+      if (node.nodeType == dom.Node.ELEMENT_NODE) {
+        final element = node as dom.Element;
+
+        // If the element is a block-level element, keep it but process its children
+        if ([
+          'p',
+          'div',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'article',
+          'section'
+        ].contains(element.localName)) {
+          // Recursively process child nodes and reconstruct the element without inline children
+          final childContent =
+              element.nodes.map((child) => processNode(child)).join('');
+          return '<${element.localName}>$childContent</${element.localName}>';
+        } else {
+          // If it's an inline element, return its text content only
+          return element.text;
+        }
+      } else if (node.nodeType == dom.Node.TEXT_NODE) {
+        // If it's a text node, return its text
+        return node.text!;
+      }
+      return '';
+    }
+
+    // Process each node in the body and reconstruct the HTML
+    final processedContent =
+        document.body!.nodes.map((node) => processNode(node)).join('');
+
+    return processedContent;
+  }
 
   void _onSelectionChanged(TextSelection selection,
       SelectionChangedCause? cause, String? selectedUuid) {
@@ -44,8 +121,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
     final highlights = ref.watch(highlightNotifierProvider);
+    final videoProgress = ref.watch(videoProgressProvider(widget.article.id));
     debugPrint(
         "BUILT: highlights = $highlights\t selectionOffset: (${_selection?.baseOffset},${_selection?.extentOffset}), pos: (${_selection?.start},${_selection?.end})");
     return Scaffold(
@@ -172,7 +257,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               const SizedBox(height: 7),
                               Container(
                                 clipBehavior: Clip.antiAlias,
-                                height: 1000,
+                                constraints: BoxConstraints(
+                                    minHeight: screenHeight * 0.8),
                                 decoration: BoxDecoration(
                                   color: const Color(0xfff4f4f4),
                                   borderRadius: BorderRadius.circular(5),
@@ -241,9 +327,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                         },
                                         factoryBuilder: () =>
                                             CustomWidgetFactory(
-                                                _onSelectionChanged,
-                                                ref,
-                                                _selectedUuid),
+                                          _onSelectionChanged,
+                                          ref,
+                                          _selectedUuid,
+                                          widget.article,
+                                        ),
                                         onTapUrl: (url) {
                                           debugPrint('tapped $url');
                                           return false;
@@ -275,8 +363,10 @@ class CustomWidgetFactory extends WidgetFactory {
       onSelectionChanged;
   final WidgetRef ref;
   final String? selectedUuid;
+  final Article article;
 
-  CustomWidgetFactory(this.onSelectionChanged, this.ref, this.selectedUuid);
+  CustomWidgetFactory(
+      this.onSelectionChanged, this.ref, this.selectedUuid, this.article);
 
   @override
   Widget? buildText(
@@ -354,4 +444,79 @@ class CustomWidgetFactory extends WidgetFactory {
     debugPrint("Final spans returned : $output");
     return spans;
   }
+
+  @override
+  Widget? buildVideoPlayer(BuildTree tree, String url,
+      {required bool autoplay,
+      required bool controls,
+      double? height,
+      required bool loop,
+      String? posterUrl,
+      double? width}) {
+    String uuid = tree.element.attributes["data-uuid"]!;
+    return DirectVideoPlayer(
+      url: url,
+      articleId: article.id,
+      videoUuid: uuid,
+    );
+  }
+
+  @override
+  Widget? buildImage(BuildTree tree, ImageMetadata data) {
+    return Container(
+        height: 250,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
+        child: super.buildImage(tree, data));
+  }
+
+  @override
+  Widget buildImageWidget(BuildTree tree, ImageSource src) {
+    final built = super.buildImageWidget(tree, src);
+
+    if (built is Image) {
+      final url = src.url;
+      return Builder(
+        builder: (context) => GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(
+                  title: const Text("Full-Screen Image View"),
+                  foregroundColor: Colors.white,
+                  flexibleSpace: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xffAEC6F6),
+                          Color.fromARGB(255, 115, 161, 254)
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                ),
+                body: PhotoView(
+                  heroAttributes: PhotoViewHeroAttributes(tag: url),
+                  imageProvider: built.image,
+                ),
+              ),
+            ),
+          ),
+          child: Hero(tag: url, child: built),
+        ),
+      );
+    }
+
+    return built ?? const SizedBox.shrink();
+  }
+
+  // @override
+  // void parse(BuildTree tree) {
+  //   if (tree.element.classes.contains('image')) {
+  //     tree.register(BuildOp(defaultStyles: (_) => {'margin': '1em 0'}));
+  //   }
+
+  //   super.parse(tree);
+  // }
 }

@@ -26,7 +26,6 @@ Future<List<ValueItem<dynamic>>> allTagsList(AllTagsListRef ref) async {
     tagsString.addAll(article.tags);
   }
 
-  ///
   List<ValueItem<dynamic>> items = <ValueItem<dynamic>>[];
   for (var tag in tagsString) {
     items.add(ValueItem(label: tag, value: tag));
@@ -212,5 +211,50 @@ class HighlightNotifier extends _$HighlightNotifier {
 
     mergedHighlights.add(newHighlight);
     return mergedHighlights;
+  }
+}
+
+@riverpod
+class Some extends _$Some {
+  @override
+  FutureOr<int> build() async {
+    await Future.delayed(const Duration(seconds: 2));
+    return 2;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class VideoProgress extends _$VideoProgress {
+  ///ask for provider[videoUUid]["currentPosition"] && provider[videoUUid]["totalDuration"]
+
+  @override
+  FutureOr<Map<String, Map<String, Duration>>?> build(String articleId) async {
+    // _articleId = articleId;
+    //get data from storage using articeID here.
+    return {};
+  }
+
+  void updateVideoProgress(String videoUuid, Duration currentPosition,
+      Duration totalDuration) async {
+    final newState = state.value;
+    newState?[videoUuid]?["currentPosition"] = currentPosition;
+    newState?[videoUuid]?["totalDuration"] = currentPosition;
+    print(
+        "updateVideoProgress provider : ${newState?[videoUuid]?["currentPosition"]}= $currentPosition");
+
+    state = AsyncValue.data(newState);
+  }
+
+  Future<void> saveVideoProgress(
+      String videoUuid, Duration currentPosition) async {
+    ///Save the progress in storage. using articleId
+    articleId;
+  }
+
+  Map<String, Duration>? getVideoProgress(String videoUuid) {
+    ///returns the video progress.
+    ///Returns null if videoUUId not found.
+    ///returns map["currentPosition"] and map["totalDuration"] as double Type
+    return state.value?[videoUuid];
   }
 }
