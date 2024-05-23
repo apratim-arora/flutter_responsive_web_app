@@ -156,7 +156,7 @@ class AsyncArticles extends _$AsyncArticles {
 }
 
 ///reader
-@riverpod
+@Riverpod(keepAlive: true)
 class HighlightNotifier extends _$HighlightNotifier {
   @override
   Map<String, List<Highlight>> build() {
@@ -228,7 +228,7 @@ class VideoProgress extends _$VideoProgress {
   ///ask for provider[videoUUid]["currentPosition"] && provider[videoUUid]["totalDuration"]
 
   @override
-  FutureOr<Map<String, Map<String, Duration>>?> build(String articleId) async {
+  FutureOr<Map<String, Map<String, Duration>?>?> build(String articleId) async {
     // _articleId = articleId;
     //get data from storage using articeID here.
     return {};
@@ -236,12 +236,13 @@ class VideoProgress extends _$VideoProgress {
 
   void updateVideoProgress(String videoUuid, Duration currentPosition,
       Duration totalDuration) async {
-    final newState = state.value;
-    newState?[videoUuid]?["currentPosition"] = currentPosition;
-    newState?[videoUuid]?["totalDuration"] = currentPosition;
+    Map<String, Map<String, Duration>?> newState = state.value ?? {};
+    newState[videoUuid] = {
+      "currentPosition": currentPosition,
+      "totalDuration": totalDuration
+    };
     print(
-        "updateVideoProgress provider : ${newState?[videoUuid]?["currentPosition"]}= $currentPosition");
-
+        "updateVideoProgress provider : ${newState[videoUuid]?["currentPosition"]}= $currentPosition, @videoUUID:$videoUuid\t fullMap:${state.value}");
     state = AsyncValue.data(newState);
   }
 
@@ -255,6 +256,8 @@ class VideoProgress extends _$VideoProgress {
     ///returns the video progress.
     ///Returns null if videoUUId not found.
     ///returns map["currentPosition"] and map["totalDuration"] as double Type
+    print(
+        "current state = ${state.value} and @videoUuid = ${state.value?[videoUuid]}(returning)");
     return state.value?[videoUuid];
   }
 }

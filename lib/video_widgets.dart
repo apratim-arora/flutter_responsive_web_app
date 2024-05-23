@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_1/models.dart';
@@ -23,37 +22,51 @@ class DirectVideoPlayer extends ConsumerStatefulWidget {
 class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   late VideoPlayerController _controller;
   late String articleId, videoUuid;
-  // int i = 0;
+  int i = 0;
 
   @override
   void initState() {
     super.initState();
     articleId = widget.articleId;
     videoUuid = widget.videoUuid;
+    var resumePoint = ref
+        .read(videoProgressProvider(articleId).notifier)
+        .getVideoProgress(videoUuid)?["currentPosition"];
+    articleId = widget.articleId;
+    videoUuid = widget.videoUuid;
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize().then((_) {
-        setState(() {});
+        setState(() {
+          if (resumePoint != null) _controller.seekTo(resumePoint);
+        });
       })
       ..addListener(_updateWatchedProgress);
   }
 
   void _updateWatchedProgress() {
-    //bug in library causing toggle icon play/pause updating problems with below if statement
-    //wrote to update screen(provider) less frequently than every second.
-    // if (i % 5 == 0) {
-    final position = _controller.value.position;
-    final duration = _controller.value.duration;
-    ref
-        .read(videoProgressProvider(articleId).notifier)
-        .updateVideoProgress(videoUuid, position, duration);
-
-    debugPrint("UPDATED VIDEO PROGRESS: $position");
-    // }
-    // i++;
+    setState(() {});
+    if (i % 5 == 0) {
+      final position = _controller.value.position;
+      final duration = _controller.value.duration;
+      ref
+          .read(videoProgressProvider(articleId).notifier)
+          .updateVideoProgress(videoUuid, position, duration);
+      ref.read(videoProgressProvider(articleId)).whenData((value) => debugPrint(
+          "UPDATED VIDEO PROGRESS: $position, @videoUUID:$videoUuid\tproviderValue: $value"));
+    }
+    i++;
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(videoProgressProvider(widget.articleId), (previous, next) {
+      next.whenData((value) {
+        Duration? progress = value?[widget.videoUuid]?["currentPosition"];
+        if (progress != null) {
+          _controller.seekTo(progress);
+        }
+      });
+    });
     return SizedBox(
       width: 500,
       child: Column(
@@ -67,7 +80,10 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
                       VideoPlayer(_controller),
                       // ClosedCaption(text: _controller.value.caption.text),
                       _ControlsOverlay(
-                          controller: _controller, isFullScreen: false),
+                          articleId: articleId,
+                          videoUuid: videoUuid,
+                          controller: _controller,
+                          isFullScreen: false),
                       VideoProgressIndicator(_controller, allowScrubbing: true),
                     ],
                   ),
@@ -86,14 +102,16 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   void dispose() {
     _controller.removeListener(_updateWatchedProgress);
     _controller.dispose();
-    // progressSavingTimer.cancel();
     super.dispose();
   }
 }
 
-class _ControlsOverlay extends StatelessWidget {
+class _ControlsOverlay extends ConsumerWidget {
   const _ControlsOverlay(
-      {required this.controller, required this.isFullScreen});
+      {required this.controller,
+      required this.isFullScreen,
+      required this.articleId,
+      required this.videoUuid});
 
   // static const List<Duration> _exampleCaptionOffsets = <Duration>[
   //   Duration(seconds: -10),
@@ -119,9 +137,13 @@ class _ControlsOverlay extends StatelessWidget {
 
   final VideoPlayerController controller;
   final bool isFullScreen;
+  final String articleId, videoUuid;
+  void _togglePlay() {
+    controller.value.isPlaying ? controller.pause() : controller.play();
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: <Widget>[
         AnimatedSwitcher(
@@ -142,9 +164,7 @@ class _ControlsOverlay extends StatelessWidget {
                 ),
         ),
         GestureDetector(
-          onTap: () {
-            controller.value.isPlaying ? controller.pause() : controller.play();
-          },
+          onTap: () => _togglePlay(),
         ),
         Align(
             alignment: Alignment.bottomLeft,
@@ -159,13 +179,7 @@ class _ControlsOverlay extends StatelessWidget {
                       horizontal: 9,
                     ),
                     child: InkWell(
-                      onTap: () {
-                        if (controller.value.isPlaying) {
-                          controller.pause();
-                        } else {
-                          controller.play();
-                        }
-                      },
+                      onTap: () => _togglePlay(),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 1.5),
@@ -248,14 +262,31 @@ class _ControlsOverlay extends StatelessWidget {
                     horizontal: 9,
                   ),
                   child: InkWell(
-                    onTap: () => !isFullScreen
-                        ? Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => _FullVideoScreenPlayer(
-                              url: controller.dataSource,
-                              position: controller.value.position,
-                            ),
-                          ))
-                        : Navigator.pop(context),
+                    onTap: () {
+                      if (!isFullScreen) {
+                        controller.pause();
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(
+                          builder: (context) => _FullVideoScreenPlayer(
+                            articleId: articleId,
+                            videoUuid: videoUuid,
+                            url: controller.dataSource,
+                            position: controller.value.position,
+                          ),
+                        ))
+                            .then((_) {
+                          Duration? p = ref
+                              .read(videoProgressProvider(articleId).notifier)
+                              .getVideoProgress(videoUuid)?["currentPosition"];
+                          debugPrint("RUNNING THEN AFTER POP: value: $p");
+                          if (p != null) {
+                            controller.seekTo(p);
+                          }
+                        });
+                      } else {
+                        Navigator.pop(context, controller.value.position);
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 1.5),
@@ -286,50 +317,60 @@ class _ControlsOverlay extends StatelessWidget {
   }
 }
 
-class _FullVideoScreenPlayer extends StatefulWidget {
+class _FullVideoScreenPlayer extends ConsumerStatefulWidget {
   final String url;
-  const _FullVideoScreenPlayer({required this.url, required this.position});
+  final String articleId;
+  final String videoUuid;
+  const _FullVideoScreenPlayer(
+      {required this.articleId,
+      required this.videoUuid,
+      required this.url,
+      this.position});
   final Duration? position;
   @override
   _FullVideoScreenPlayerState createState() => _FullVideoScreenPlayerState();
 }
 
-class _FullVideoScreenPlayerState extends State<_FullVideoScreenPlayer> {
-  late VideoPlayerController videoPlayerController;
+class _FullVideoScreenPlayerState
+    extends ConsumerState<_FullVideoScreenPlayer> {
+  late VideoPlayerController controller;
   bool startedPlaying = false;
   double watchedPercentage = 0;
+  int i = 0;
 
   @override
   void initState() {
     super.initState();
-    videoPlayerController =
-        VideoPlayerController.networkUrl(Uri.parse(widget.url))
-          ..initialize().then((_) {
-            setState(() {
-              if (widget.position != null && widget.position?.inSeconds != 0) {
-                videoPlayerController.seekTo(widget.position!);
-              }
-              videoPlayerController.play();
-            });
-          })
-          ..addListener(updateWatchedPercentage);
+    controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        setState(() {
+          if (widget.position != null && widget.position?.inSeconds != 0) {
+            controller.seekTo(widget.position!);
+          }
+        });
+      });
+    controller.play();
+    controller.addListener(_updateWatchedProgress);
   }
 
-  void updateWatchedPercentage() {
-    final position = videoPlayerController.value.position;
-    final duration = videoPlayerController.value.duration;
-    if (duration.inMilliseconds > 0) {
-      setState(() {
-        watchedPercentage = position.inMilliseconds / duration.inMilliseconds;
-      });
-      // Optionally, do something with this information, like updating a server or local database
-      print("Watched: ${(watchedPercentage * 100).toStringAsFixed(2)}%");
+  void _updateWatchedProgress() {
+    setState(() {});
+    if (i % 5 == 0) {
+      final position = controller.value.position;
+      final duration = controller.value.duration;
+      ref
+          .read(videoProgressProvider(widget.articleId).notifier)
+          .updateVideoProgress(widget.videoUuid, position, duration);
+
+      debugPrint("UPDATED VIDEO PROGRESS: $position");
     }
+    i++;
   }
 
   @override
   void dispose() {
-    videoPlayerController.dispose();
+    controller.removeListener(_updateWatchedProgress);
+    controller.dispose();
     super.dispose();
   }
 
@@ -343,21 +384,26 @@ class _FullVideoScreenPlayerState extends State<_FullVideoScreenPlayer> {
           builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
             if (snapshot.data ?? false) {
               return AspectRatio(
-                aspectRatio: videoPlayerController.value.aspectRatio,
+                aspectRatio: controller.value.aspectRatio,
                 child: Stack(
                   alignment: Alignment.bottomCenter,
                   children: <Widget>[
-                    VideoPlayer(videoPlayerController),
+                    VideoPlayer(controller),
                     // ClosedCaption(text: _controller.value.caption.text),
                     _ControlsOverlay(
-                        controller: videoPlayerController, isFullScreen: true),
-                    VideoProgressIndicator(videoPlayerController,
-                        allowScrubbing: true),
+                        articleId: widget.articleId,
+                        videoUuid: widget.videoUuid,
+                        controller: controller,
+                        isFullScreen: true),
+                    VideoProgressIndicator(controller, allowScrubbing: true),
                   ],
                 ),
               );
             } else {
-              return const Text('Loading...');
+              return const Text(
+                'Loading...',
+                style: TextStyle(color: Colors.white38),
+              );
             }
           },
         ),

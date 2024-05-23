@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
           folderPath: ["Important", "Notes", "2022"],
           progress: 39,
         ))
-        //const MyHomePage(title: 'Productivity'),
+        // const MyHomePage(title: 'Productivity'),
         );
   }
 }
