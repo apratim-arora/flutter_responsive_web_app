@@ -1,11 +1,17 @@
+import 'dart:math';
 import 'package:animate_gradient/animate_gradient.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:responsive_1/video_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
@@ -19,7 +25,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
 <body>
   <article>
     <h1>Sample Article</h1>
-    <p>This is a paragraph with <b>bold text</b> and <i>italic text</i>.</p>
+    <p>This is a paragraph with some sample content.<br>The Next Line</p>
     <h2>List Example</h2>
     <ul>
       <li>List item 1</li>
@@ -39,10 +45,18 @@ class ReaderScreen extends ConsumerStatefulWidget {
     </table>
     <h2>Image Example</h2>
     <p><img src="https://hips.hearstapps.com/hmg-prod/images/bright-forget-me-nots-royalty-free-image-1677788394.jpg" alt="Flowers image"></p>
-    <h2>Video Example</h2>
+    <h2>IFrame Example</h2>
     <p><iframe width="420" height="345" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></p>
+    </ul>
+    <h2>Video Example</h2>
     <video width="320" height="240" controls>
   <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  <figcaption> Hello World</figcaption>
+</video>
+<h2>Another Video Example</h2>
+    <video width="320" height="240" controls>
+  <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4">
   Your browser does not support the video tag.
   <figcaption> Hello World</figcaption>
 </video>
@@ -58,7 +72,31 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   TextSelection? _selection;
   String? _selectedUuid;
+  late Article article;
   final Uuid uuid = const Uuid();
+  bool eraserActive = false;
+  late bool isMobile;
+
+  void _toggleEraser({bool? value}) {
+    setState(() {
+      eraserActive = value ?? !eraserActive;
+      if (eraserActive) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Highlight eraser active'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Highlight eraser Inactive'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
 
   String removeInlineTags(String htmlContent) {
     // Parse the HTML content
@@ -111,6 +149,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _selection = selection;
       _selectedUuid = selectedUuid;
       debugPrint("Selected UUID:$selectedUuid");
+      if (eraserActive && _selectedUuid != null && _selection != null) {
+        ref
+            .read(highlightNotifierProvider.notifier)
+            .removeHighlight(_selectedUuid!, _selection!.baseOffset);
+      }
     });
     debugPrint(
         "FUNCTION:selection var update offset= (${selection.baseOffset},${selection.extentOffset}), position:(${selection.start},${selection.end})");
@@ -123,14 +166,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   void initState() {
     super.initState();
+
+    article = widget.article;
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
+    isMobile = MediaQuery.of(context).size.width < 600;
     double screenHeight = MediaQuery.of(context).size.height;
     final highlights = ref.watch(highlightNotifierProvider);
-    final videoProgress = ref.watch(videoProgressProvider(widget.article.id));
+    final scaleFactor = ref.watch(textScaleFactorProvider);
+    final highlightColor = ref.watch(highLightColorProvider);
+    ref.watch(textScaleFactorProvider);
     debugPrint(
         "BUILT: highlights = $highlights\t selectionOffset: (${_selection?.baseOffset},${_selection?.extentOffset}), pos: (${_selection?.start},${_selection?.end})");
     return Scaffold(
@@ -159,13 +207,104 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      // Color(0xff21d7e7),
-                      // Color(0xff2386f4)
                       Color(0xffAEC6F6),
                       Color.fromARGB(255, 115, 161, 254)
-                    ], //[Color(0xffe0e1e7), Color(0xfff5f6f8)],
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Align(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AppbarIconButton(
+                        tooltip: "Bigger Text",
+                        icon: const Icon(Icons.add),
+                        onPressed: () => ref
+                            .read(textScaleFactorProvider.notifier)
+                            .increaseSizeFactor(),
+                      ),
+                      AppbarIconButton(
+                        tooltip: "Smaller Text",
+                        icon: const Icon(CupertinoIcons.minus),
+                        onPressed: () => ref
+                            .read(textScaleFactorProvider.notifier)
+                            .decreaseSizeFactor(),
+                      ),
+                      AppbarIconButton(
+                        tooltip: "Highlight Selection",
+                        icon: Icon(
+                          CupertinoIcons.pencil,
+                          color: highlightColor,
+                        ),
+                        onPressed: (_selection != null && _selectedUuid != null)
+                            ? () {
+                                ref
+                                    .read(highlightNotifierProvider.notifier)
+                                    .addHighlight(
+                                      _selectedUuid!,
+                                      TextRange(
+                                          start: _selection!.start,
+                                          end: _selection!.end),
+                                    );
+                                _selection = null;
+                              }
+                            : null,
+                      ),
+                      PopupMenuButton(
+                        position: PopupMenuPosition.under,
+                        constraints: const BoxConstraints(
+                            minWidth: double.minPositive, maxWidth: 5 * 56.0),
+                        child: const AppbarIconButton(
+                          tooltip: "Highlight color",
+                          icon: Icon(
+                            Icons.arrow_drop_down_circle_outlined,
+                          ),
+                          onPressed: null,
+                        ),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            onTap: () => ref
+                                .read(highLightColorProvider.notifier)
+                                .updateColor(Colors.yellow),
+                            child:
+                                const ColorSelectionDropdownItem(Colors.yellow),
+                          ),
+                          PopupMenuItem(
+                            onTap: () => ref
+                                .read(highLightColorProvider.notifier)
+                                .updateColor(Colors.red),
+                            child: const ColorSelectionDropdownItem(Colors.red),
+                          ),
+                          PopupMenuItem(
+                            onTap: () => ref
+                                .read(highLightColorProvider.notifier)
+                                .updateColor(Colors.green),
+                            child:
+                                const ColorSelectionDropdownItem(Colors.green),
+                          ),
+                          PopupMenuItem(
+                            onTap: () => ref
+                                .read(highLightColorProvider.notifier)
+                                .updateColor(Colors.blue),
+                            child:
+                                const ColorSelectionDropdownItem(Colors.blue),
+                          ),
+                        ],
+                      ),
+                      AppbarIconButton(
+                        tooltip: "Erase Highlight",
+                        icon: Icon(
+                          Icons.stay_current_landscape_rounded,
+                          color: eraserActive ? Colors.blue : Colors.black,
+                        ),
+                        onPressed: () {
+                          _toggleEraser();
+                          debugPrint("Cursor changed: $eraserActive");
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -186,24 +325,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SplitScreenTitle(
-                                text: "About", iconData: Icons.info_outline),
+                            SplitScreenTitle(
+                              text: "About",
+                              iconData: Icons.info_outline,
+                              trailing: IconButton.outlined(
+                                  style: OutlinedButton.styleFrom(
+                                      side:
+                                          const BorderSide(color: Colors.grey)),
+                                  color: Colors.blue,
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    size: 20,
+                                  )),
+                            ),
                             const SizedBox(height: 7),
                             Container(
-                              clipBehavior: Clip.antiAlias,
-                              height: 300,
-                              decoration: BoxDecoration(
-                                color: const Color(0xfff4f4f4),
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
-                                  color: Colors.grey[350]!,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xfff4f4f4),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: Colors.grey[350]!,
+                                  ),
                                 ),
-                              ),
-                              child: const Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [],
-                              ),
-                            )
+                                child: aboutArticleColumn(
+                                    article,
+                                    ref.read(
+                                        selectedTagListForFilteringProvider)))
                           ],
                         ),
                       ),
@@ -282,63 +432,41 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                           Tab(text: "Summary"),
                                         ],
                                       ),
-                                      Align(
-                                        child: ElevatedButton(
-                                            onPressed: _selection != null &&
-                                                    _selectedUuid != null
-                                                ? () {
-                                                    const color = Colors.red;
-                                                    ref
-                                                        .read(
-                                                            highlightNotifierProvider
-                                                                .notifier)
-                                                        .addHighlight(
-                                                            _selectedUuid!,
-                                                            TextRange(
-                                                                start:
-                                                                    _selection!
-                                                                        .start,
-                                                                end: _selection!
-                                                                    .end),
-                                                            color);
-                                                    _selection = null;
-                                                    debugPrint(
-                                                        "CLICKED: selection must be updated, check build below");
-                                                  }
-                                                : null,
-                                            child: const Text(
-                                                'Highlight Selected Text')),
-                                      ),
                                       const SizedBox(height: 20),
-                                      HtmlWidget(
-                                        widget
-                                            .htmlContent, //widget.htmlContent,
-                                        enableCaching: false,
-                                        customWidgetBuilder: (element) {
-                                          final position = element
-                                                  .parent?.children
-                                                  .indexOf(element) ??
-                                              0;
-                                          final content = element.outerHtml;
-                                          element.attributes['data-uuid'] =
-                                              generateUuidFromContent(
-                                                  content, position);
-                                          return null;
-                                        },
-                                        factoryBuilder: () =>
-                                            CustomWidgetFactory(
-                                          _onSelectionChanged,
-                                          ref,
-                                          _selectedUuid,
-                                          widget.article,
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: HtmlWidget(
+                                          widget.htmlContent,
+                                          // enableCaching: false,
+                                          customWidgetBuilder: (element) {
+                                            final position = element
+                                                    .parent?.children
+                                                    .indexOf(element) ??
+                                                0;
+                                            final content = element.outerHtml;
+                                            element.attributes['data-uuid'] =
+                                                generateUuidFromContent(
+                                                    content, position);
+                                            return null;
+                                          },
+                                          factoryBuilder: () =>
+                                              CustomWidgetFactory(
+                                            _onSelectionChanged,
+                                            ref,
+                                            _selectedUuid,
+                                            widget.article,
+                                          ),
+                                          onTapUrl: (url) {
+                                            debugPrint('tapped $url');
+                                            return false;
+                                          },
+                                          textStyle: TextStyle(
+                                              fontSize: 14 * scaleFactor),
+                                          rebuildTriggers: [
+                                            highlights,
+                                            scaleFactor
+                                          ],
                                         ),
-                                        onTapUrl: (url) {
-                                          debugPrint('tapped $url');
-                                          return false;
-                                        },
-                                        textStyle:
-                                            const TextStyle(fontSize: 14),
-                                        rebuildTriggers: [highlights],
                                       ),
                                     ],
                                   ),
@@ -355,6 +483,257 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ),
       ),
     );
+  }
+
+  Column aboutArticleColumn(Article article, List<dynamic> selectedtags) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ExpandedBodyRowItem(
+          title: "URL",
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                flex: 15,
+                child: InkWell(
+                  onTap: () => _launchUrl(article.url, context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        flex: 100,
+                        child: AutoSizeText(
+                          article.url.length > 40
+                              ? "${article.url.substring(0, 40)}..."
+                              : article.url,
+                          minFontSize: 12,
+                          maxFontSize: 14,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          wrapWords: false,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                            fontFamily: "DidactGothic",
+                          ),
+                        ),
+                      ),
+                      if (!isMobile)
+                        const Flexible(flex: 2, child: SizedBox(width: 3)),
+                      Flexible(
+                          flex: 5,
+                          child: FittedBox(
+                            child: Icon(
+                              CupertinoIcons.arrow_up_right_square,
+                              size: 16,
+                              color: Colors.blue[600],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+              const Flexible(
+                  child: SizedBox(
+                width: 5,
+              )),
+              Flexible(
+                flex: 5,
+                // height: 25,
+                child: FittedBox(
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7.0),
+                      color: Colors.white54,
+                      gradient: const LinearGradient(colors: [
+                        Color(0xfff9ce34),
+                        Color.fromARGB(187, 238, 42, 124),
+                        Color.fromARGB(169, 110, 66, 198),
+                      ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    ),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ReaderScreen(article)));
+                      },
+                      // statesController: statesController,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(style: BorderStyle.none),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7.0)),
+                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        "Read here",
+                        style: TextStyle(color: Color.fromRGBO(66, 66, 66, 1)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ExpandedBodyRowItem(
+            title: "Description",
+            content: AutoSizeText(
+              article.description,
+              minFontSize: 5,
+              maxFontSize: 12,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            )),
+        ExpandedBodyRowItem(
+          title: "Tags",
+          content: article.tags.isNotEmpty
+              ? Wrap(
+                  clipBehavior: Clip.antiAlias,
+                  spacing: 3,
+                  runSpacing: 3,
+                  children: article.tags
+                      .map((tagName) => Chip(
+                            backgroundColor: Colors.primaries[
+                                    Random().nextInt(Colors.primaries.length)]
+                                .withAlpha(15),
+                            side: !selectedtags.contains(tagName)
+                                ? BorderSide(
+                                    width: 0.2, color: Colors.grey.shade200)
+                                : const BorderSide(
+                                    width: 1, color: Colors.blue),
+                            label: AutoSizeText(
+                              tagName,
+                              minFontSize: 5,
+                              maxFontSize: 11,
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            labelStyle: const TextStyle(),
+                          ))
+                      .toList(),
+                )
+              : null,
+        ),
+        ExpandedBodyRowItem(
+          title: "Folder path",
+          content: (article.folderPath?.isNotEmpty != null &&
+                  article.folderPath?.isNotEmpty == true)
+              ? BreadCrumb(
+                  items: article.folderPath!
+                      .map((folder) => BreadCrumbItem(
+                              content: AutoSizeText(
+                            folder,
+                            group: breadcrumbGroupAutoSize,
+                            softWrap: true,
+                            minFontSize: 7,
+                            maxFontSize: 12,
+                          )))
+                      .toList(),
+                  divider: const Icon(Icons.chevron_right_rounded),
+                )
+              : null,
+        ),
+        ExpandedBodyRowItem(
+            title: "Progresss",
+            content: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  flex: 3,
+                  child: CircularPercentIndicator(
+                    radius: 23,
+                    // animation: true,
+                    // animationDuration: 1000,
+                    center: AutoSizeText(
+                      "${article.progress}%",
+                      maxLines: 1,
+                      minFontSize: 5,
+                      maxFontSize: 11,
+                      style: const TextStyle(
+                          fontFamily: "DidactGothic",
+                          fontWeight: FontWeight.bold),
+                    ),
+                    percent: article.progress / 100,
+                    progressColor: getProgressColor(article.progress),
+                    backgroundColor: Colors.deepPurple.shade100,
+                    circularStrokeCap: CircularStrokeCap.round,
+                  ),
+                ),
+                Flexible(
+                  flex: 10,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        child: IconAndLabel(
+                            icon: Icon(
+                              Icons.circle,
+                              size: 15,
+                              color: getProgressColor(article.progress),
+                            ),
+                            label: AutoSizeText(
+                              "${article.progress}% progress made.",
+                              maxFontSize: 12,
+                              maxLines: 1,
+                              minFontSize: 7,
+                            )),
+                      ),
+                      FittedBox(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 1.0),
+                          child: IconAndLabel(
+                            icon: const Icon(
+                              Icons.access_time_rounded,
+                              size: 15,
+                              color: Colors.grey,
+                            ),
+                            label: AutoSizeText(
+                              "${getFormattedDuration(article.estCompletionTime)}, est. total time",
+                              maxFontSize: 12,
+                              maxLines: 1,
+                              minFontSize: 7,
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ))
+      ],
+    );
+  }
+
+  AutoSizeGroup breadcrumbGroupAutoSize = AutoSizeGroup();
+  Future<void> _launchUrl(String url, BuildContext context) async {
+    Uri link = Uri.parse(url);
+    if (!await launchUrl(link, webOnlyWindowName: "_blank")) {
+      debugPrint("Something happened while opening link $url");
+      // showDialog(
+      //   context: context,
+      //   builder: (context) => AlertDialog(
+      //     title: const Text(
+      //       "Could not open URL.",
+      //       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      //     ),
+      //     content: Text("Unable to launch URL $url"),
+      //     actions: [
+      //       TextButton(
+      //           onPressed: () => Navigator.of(context).pop(),
+      //           child: const Text("OK"))
+      //     ],
+      //   ),
+      // );
+    }
   }
 }
 
@@ -405,6 +784,7 @@ class CustomWidgetFactory extends WidgetFactory {
     for (var highlights in sortedHighlights) {
       final range = highlights.range;
       final color = highlights.color;
+
       debugPrint(
           "Entered in loop for all highlighted entries.\n CUrrentrange = $range");
 
@@ -422,8 +802,7 @@ class CustomWidgetFactory extends WidgetFactory {
       debugPrint("HIGHLIGHTED span: ${text.substring(range.start, range.end)}");
       spans.add(TextSpan(
         text: text.substring(range.start, range.end),
-        style: textSpan.style?.copyWith(
-            backgroundColor: color), //TextStyle( backgroundColor: color)
+        style: textSpan.style?.copyWith(backgroundColor: color),
       ));
 
       currentIndex = range.end;

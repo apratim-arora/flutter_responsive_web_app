@@ -152,14 +152,30 @@ final asyncArticlesProvider =
 );
 
 typedef _$AsyncArticles = AutoDisposeAsyncNotifier<List<Article>>;
-String _$highlightNotifierHash() => r'e98871ce3f97d6cfab910c964018d640424e11ab';
+String _$highLightColorHash() => r'3bbcd2cb5896beb41c66c8d6741348b9afe2906a';
 
 ///reader
 ///
-/// Copied from [HighlightNotifier].
+/// Copied from [HighLightColor].
+@ProviderFor(HighLightColor)
+final highLightColorProvider =
+    AutoDisposeNotifierProvider<HighLightColor, Color>.internal(
+  HighLightColor.new,
+  name: r'highLightColorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$highLightColorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$HighLightColor = AutoDisposeNotifier<Color>;
+String _$highlightNotifierHash() => r'375d763fcf6f97e776abcac1f7e7f7229774aa73';
+
+/// See also [HighlightNotifier].
 @ProviderFor(HighlightNotifier)
-final highlightNotifierProvider = AutoDisposeNotifierProvider<HighlightNotifier,
-    Map<String, List<Highlight>>>.internal(
+final highlightNotifierProvider =
+    NotifierProvider<HighlightNotifier, Map<String, List<Highlight>>>.internal(
   HighlightNotifier.new,
   name: r'highlightNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -169,7 +185,7 @@ final highlightNotifierProvider = AutoDisposeNotifierProvider<HighlightNotifier,
   allTransitiveDependencies: null,
 );
 
-typedef _$HighlightNotifier = AutoDisposeNotifier<Map<String, List<Highlight>>>;
+typedef _$HighlightNotifier = Notifier<Map<String, List<Highlight>>>;
 String _$someHash() => r'00dc88b04d39562a9fc184eff1410901cf848508';
 
 /// See also [Some].
@@ -184,7 +200,7 @@ final someProvider = AutoDisposeAsyncNotifierProvider<Some, int>.internal(
 );
 
 typedef _$Some = AutoDisposeAsyncNotifier<int>;
-String _$videoProgressHash() => r'25cbec049e05b6e494be6f1d22191ed2e68ff07f';
+String _$videoProgressHash() => r'72afaad496f9b92aedcb6f13aa7bdbbe39b729d1';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -208,10 +224,10 @@ class _SystemHash {
 }
 
 abstract class _$VideoProgress
-    extends BuildlessAsyncNotifier<Map<String, Map<String, Duration>>?> {
+    extends BuildlessAsyncNotifier<Map<String, Map<String, Duration>?>?> {
   late final String articleId;
 
-  FutureOr<Map<String, Map<String, Duration>>?> build(
+  FutureOr<Map<String, Map<String, Duration>?>?> build(
     String articleId,
   );
 }
@@ -222,7 +238,7 @@ const videoProgressProvider = VideoProgressFamily();
 
 /// See also [VideoProgress].
 class VideoProgressFamily
-    extends Family<AsyncValue<Map<String, Map<String, Duration>>?>> {
+    extends Family<AsyncValue<Map<String, Map<String, Duration>?>?>> {
   /// See also [VideoProgress].
   const VideoProgressFamily();
 
@@ -261,7 +277,7 @@ class VideoProgressFamily
 
 /// See also [VideoProgress].
 class VideoProgressProvider extends AsyncNotifierProviderImpl<VideoProgress,
-    Map<String, Map<String, Duration>>?> {
+    Map<String, Map<String, Duration>?>?> {
   /// See also [VideoProgress].
   VideoProgressProvider(
     String articleId,
@@ -292,7 +308,7 @@ class VideoProgressProvider extends AsyncNotifierProviderImpl<VideoProgress,
   final String articleId;
 
   @override
-  FutureOr<Map<String, Map<String, Duration>>?> runNotifierBuild(
+  FutureOr<Map<String, Map<String, Duration>?>?> runNotifierBuild(
     covariant VideoProgress notifier,
   ) {
     return notifier.build(
@@ -318,7 +334,7 @@ class VideoProgressProvider extends AsyncNotifierProviderImpl<VideoProgress,
 
   @override
   AsyncNotifierProviderElement<VideoProgress,
-      Map<String, Map<String, Duration>>?> createElement() {
+      Map<String, Map<String, Duration>?>?> createElement() {
     return _VideoProgressProviderElement(this);
   }
 
@@ -337,17 +353,34 @@ class VideoProgressProvider extends AsyncNotifierProviderImpl<VideoProgress,
 }
 
 mixin VideoProgressRef
-    on AsyncNotifierProviderRef<Map<String, Map<String, Duration>>?> {
+    on AsyncNotifierProviderRef<Map<String, Map<String, Duration>?>?> {
   /// The parameter `articleId` of this provider.
   String get articleId;
 }
 
 class _VideoProgressProviderElement extends AsyncNotifierProviderElement<
-    VideoProgress, Map<String, Map<String, Duration>>?> with VideoProgressRef {
+    VideoProgress, Map<String, Map<String, Duration>?>?> with VideoProgressRef {
   _VideoProgressProviderElement(super.provider);
 
   @override
   String get articleId => (origin as VideoProgressProvider).articleId;
 }
+
+String _$textScaleFactorHash() => r'7b014b77314deed7dd1ae995b3387d6471891f90';
+
+/// See also [TextScaleFactor].
+@ProviderFor(TextScaleFactor)
+final textScaleFactorProvider =
+    NotifierProvider<TextScaleFactor, double>.internal(
+  TextScaleFactor.new,
+  name: r'textScaleFactorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$textScaleFactorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$TextScaleFactor = Notifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

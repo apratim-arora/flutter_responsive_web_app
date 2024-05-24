@@ -157,6 +157,18 @@ class AsyncArticles extends _$AsyncArticles {
 
 ///reader
 @riverpod
+class HighLightColor extends _$HighLightColor {
+  @override
+  Color build() {
+    return Colors.yellow;
+  }
+
+  void updateColor(Color color) {
+    state = color;
+  }
+}
+
+@Riverpod(keepAlive: true)
 class HighlightNotifier extends _$HighlightNotifier {
   @override
   Map<String, List<Highlight>> build() {
@@ -166,13 +178,31 @@ class HighlightNotifier extends _$HighlightNotifier {
   //   state = highlights;
   // }
 
-  void removeHighlight(TextRange range) {
-    final newState = Map.of(state);
-    newState.remove(range);
-    state = newState;
+  void removeHighlight(String uuid, int clickIndex) {
+    // Check avaailability of the highlight for given uuid
+    if (state.containsKey(uuid)) {
+      final newState = Map<String, List<Highlight>>.from(state);
+      final List<Highlight>? currentHighlights = newState[uuid];
+      if (currentHighlights == null) return;
+      // selecting the highlight containing clickIndex
+      Highlight highlightToRemove = currentHighlights.firstWhere(
+          (highlight) =>
+              highlight.range.start <= clickIndex &&
+              highlight.range.end >= clickIndex,
+          orElse: Highlight.empty);
+      if (highlightToRemove.range.start == highlightToRemove.range.end) return;
+      // removing on match
+      newState[uuid]!.remove(highlightToRemove);
+      // If after removal, the list for this uuid is empty, removing the whole key.
+      if (newState[uuid]!.isEmpty) {
+        newState.remove(uuid);
+      }
+      state = newState;
+    }
   }
 
-  void addHighlight(String uuid, TextRange range, Color color) {
+  void addHighlight(String uuid, TextRange range) {
+    final color = ref.read(highLightColorProvider);
     final highlight = Highlight(range: range, color: color, uuid: uuid);
     if (state.containsKey(uuid)) {
       state = {
@@ -228,7 +258,7 @@ class VideoProgress extends _$VideoProgress {
   ///ask for provider[videoUUid]["currentPosition"] && provider[videoUUid]["totalDuration"]
 
   @override
-  FutureOr<Map<String, Map<String, Duration>>?> build(String articleId) async {
+  FutureOr<Map<String, Map<String, Duration>?>?> build(String articleId) async {
     // _articleId = articleId;
     //get data from storage using articeID here.
     return {};
@@ -236,12 +266,13 @@ class VideoProgress extends _$VideoProgress {
 
   void updateVideoProgress(String videoUuid, Duration currentPosition,
       Duration totalDuration) async {
-    final newState = state.value;
-    newState?[videoUuid]?["currentPosition"] = currentPosition;
-    newState?[videoUuid]?["totalDuration"] = currentPosition;
+    Map<String, Map<String, Duration>?> newState = state.value ?? {};
+    newState[videoUuid] = {
+      "currentPosition": currentPosition,
+      "totalDuration": totalDuration
+    };
     print(
-        "updateVideoProgress provider : ${newState?[videoUuid]?["currentPosition"]}= $currentPosition");
-
+        "updateVideoProgress provider : ${newState[videoUuid]?["currentPosition"]}= $currentPosition, @videoUUID:$videoUuid\t fullMap:${state.value}");
     state = AsyncValue.data(newState);
   }
 
@@ -255,6 +286,26 @@ class VideoProgress extends _$VideoProgress {
     ///returns the video progress.
     ///Returns null if videoUUId not found.
     ///returns map["currentPosition"] and map["totalDuration"] as double Type
+    print(
+        "current state = ${state.value} and @videoUuid = ${state.value?[videoUuid]}(returning)");
     return state.value?[videoUuid];
+  }
+}
+
+@Riverpod(keepAlive: true)
+class TextScaleFactor extends _$TextScaleFactor {
+  @override
+  double build() {
+    return 1.0;
+  }
+
+  void increaseSizeFactor() {
+    if (state > 2.1) return;
+    state = state + 0.1;
+  }
+
+  void decreaseSizeFactor() {
+    if (state < 0.7) return;
+    state = state - 0.1;
   }
 }
