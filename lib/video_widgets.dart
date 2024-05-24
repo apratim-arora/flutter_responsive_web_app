@@ -51,41 +51,48 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
       ref
           .read(videoProgressProvider(articleId).notifier)
           .updateVideoProgress(videoUuid, position, duration);
-      ref.read(videoProgressProvider(articleId)).whenData((value) => debugPrint(
-          "UPDATED VIDEO PROGRESS: $position, @videoUUID:$videoUuid\tproviderValue: $value"));
+      // ref.read(videoProgressProvider(articleId)).whenData((value) => debugPrint(
+      //     "UPDATED VIDEO PROGRESS: $position, @videoUUID:$videoUuid\tproviderValue: $value"));
     }
     i++;
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(videoProgressProvider(widget.articleId), (previous, next) {
-      next.whenData((value) {
-        Duration? progress = value?[widget.videoUuid]?["currentPosition"];
-        if (progress != null) {
-          _controller.seekTo(progress);
-        }
-      });
-    });
+    // ref.listen(videoProgressProvider(widget.articleId), (previous, next) {
+    //   next.whenData((value) {
+    //     Duration? progress = value?[widget.videoUuid]?["currentPosition"];
+    //     if (progress != null) {
+    //       _controller.seekTo(progress);
+    //       print("ref.listen worked");
+    //     }
+    //   });
+    // });
     return SizedBox(
-      width: 500,
+      width: 520,
       child: Column(
         children: [
           _controller.value.isInitialized
-              ? AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: <Widget>[
-                      VideoPlayer(_controller),
-                      // ClosedCaption(text: _controller.value.caption.text),
-                      _ControlsOverlay(
-                          articleId: articleId,
-                          videoUuid: videoUuid,
-                          controller: _controller,
-                          isFullScreen: false),
-                      VideoProgressIndicator(_controller, allowScrubbing: true),
-                    ],
+              ? Hero(
+                  tag: videoUuid,
+                  child: Material(
+                    child: AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: <Widget>[
+                          VideoPlayer(_controller),
+                          // ClosedCaption(text: _controller.value.caption.text),
+                          _ControlsOverlay(
+                              articleId: articleId,
+                              videoUuid: videoUuid,
+                              controller: _controller,
+                              isFullScreen: false),
+                          VideoProgressIndicator(_controller,
+                              allowScrubbing: true),
+                        ],
+                      ),
+                    ),
                   ),
                 )
               : const SizedBox(
@@ -278,8 +285,9 @@ class _ControlsOverlay extends ConsumerWidget {
                           Duration? p = ref
                               .read(videoProgressProvider(articleId).notifier)
                               .getVideoProgress(videoUuid)?["currentPosition"];
-                          debugPrint("RUNNING THEN AFTER POP: value: $p");
+                          // debugPrint("RUNNING THEN AFTER POP: value: $p");
                           if (p != null) {
+                            print("pop seek worked");
                             controller.seekTo(p);
                           }
                         });
@@ -362,7 +370,7 @@ class _FullVideoScreenPlayerState
           .read(videoProgressProvider(widget.articleId).notifier)
           .updateVideoProgress(widget.videoUuid, position, duration);
 
-      debugPrint("UPDATED VIDEO PROGRESS: $position");
+      // debugPrint("UPDATED VIDEO PROGRESS: $position");
     }
     i++;
   }
@@ -383,20 +391,23 @@ class _FullVideoScreenPlayerState
           future: Future.value(true),
           builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
             if (snapshot.data ?? false) {
-              return AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: <Widget>[
-                    VideoPlayer(controller),
-                    // ClosedCaption(text: _controller.value.caption.text),
-                    _ControlsOverlay(
-                        articleId: widget.articleId,
-                        videoUuid: widget.videoUuid,
-                        controller: controller,
-                        isFullScreen: true),
-                    VideoProgressIndicator(controller, allowScrubbing: true),
-                  ],
+              return Hero(
+                tag: widget.videoUuid,
+                child: AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: <Widget>[
+                      VideoPlayer(controller),
+                      // ClosedCaption(text: _controller.value.caption.text),
+                      _ControlsOverlay(
+                          articleId: widget.articleId,
+                          videoUuid: widget.videoUuid,
+                          controller: controller,
+                          isFullScreen: true),
+                      VideoProgressIndicator(controller, allowScrubbing: true),
+                    ],
+                  ),
                 ),
               );
             } else {

@@ -5,6 +5,11 @@ class Highlight {
   final String uuid;
   final TextRange range;
   final Color color;
+  factory Highlight.empty() => Highlight(
+        uuid: "",
+        range: const TextRange(start: 0, end: 0),
+        color: Colors.yellow,
+      );
 
   Highlight({required this.uuid, required this.range, required this.color});
 }

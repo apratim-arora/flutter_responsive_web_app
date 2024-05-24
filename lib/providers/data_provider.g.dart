@@ -152,11 +152,27 @@ final asyncArticlesProvider =
 );
 
 typedef _$AsyncArticles = AutoDisposeAsyncNotifier<List<Article>>;
-String _$highlightNotifierHash() => r'f2f5a05954781d00bd6f75de623bb3ead5425e05';
+String _$highLightColorHash() => r'3bbcd2cb5896beb41c66c8d6741348b9afe2906a';
 
 ///reader
 ///
-/// Copied from [HighlightNotifier].
+/// Copied from [HighLightColor].
+@ProviderFor(HighLightColor)
+final highLightColorProvider =
+    AutoDisposeNotifierProvider<HighLightColor, Color>.internal(
+  HighLightColor.new,
+  name: r'highLightColorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$highLightColorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$HighLightColor = AutoDisposeNotifier<Color>;
+String _$highlightNotifierHash() => r'375d763fcf6f97e776abcac1f7e7f7229774aa73';
+
+/// See also [HighlightNotifier].
 @ProviderFor(HighlightNotifier)
 final highlightNotifierProvider =
     NotifierProvider<HighlightNotifier, Map<String, List<Highlight>>>.internal(
@@ -349,5 +365,22 @@ class _VideoProgressProviderElement extends AsyncNotifierProviderElement<
   @override
   String get articleId => (origin as VideoProgressProvider).articleId;
 }
+
+String _$textScaleFactorHash() => r'7b014b77314deed7dd1ae995b3387d6471891f90';
+
+/// See also [TextScaleFactor].
+@ProviderFor(TextScaleFactor)
+final textScaleFactorProvider =
+    NotifierProvider<TextScaleFactor, double>.internal(
+  TextScaleFactor.new,
+  name: r'textScaleFactorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$textScaleFactorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$TextScaleFactor = Notifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
