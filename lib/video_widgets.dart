@@ -5,7 +5,7 @@ import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:video_player/video_player.dart';
 
-class DirectVideoPlayer extends StatefulWidget {
+class DirectVideoPlayer extends ConsumerStatefulWidget {
   final String url;
   final String articleId;
   final String videoUuid;
@@ -19,7 +19,7 @@ class DirectVideoPlayer extends StatefulWidget {
   DirectVideoPlayerState createState() => DirectVideoPlayerState();
 }
 
-class DirectVideoPlayerState extends State<DirectVideoPlayer> {
+class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   late VideoPlayerController _controller;
   late String articleId, videoUuid;
   int i = 0;
@@ -144,7 +144,7 @@ class _ControlsOverlay extends ConsumerWidget {
   final String articleId, videoUuid;
   final VideoPlayerController controller;
   final bool isFullScreen;
-  final String articleId, videoUuid;
+  // final String articleId, videoUuid;
   void _togglePlay() {
     controller.value.isPlaying ? controller.pause() : controller.play();
   }
@@ -156,7 +156,7 @@ class _ControlsOverlay extends ConsumerWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 50),
           reverseDuration: const Duration(milliseconds: 200),
-          child: widget.controller.value.isPlaying
+          child: controller.value.isPlaying
               ? const SizedBox.shrink()
               : const ColoredBox(
                   color: Colors.black26,
@@ -195,7 +195,7 @@ class _ControlsOverlay extends ConsumerWidget {
                             color: Colors.black54,
                             border: Border.all(color: Colors.white60)),
                         child: Icon(
-                          widget.controller.value.isPlaying
+                          controller.value.isPlaying
                               ? Icons.pause
                               : Icons.play_arrow,
                           size: 21,
@@ -213,7 +213,7 @@ class _ControlsOverlay extends ConsumerWidget {
                       color: Colors.black54,
                     ),
                     child: Text(
-                      "${getFormattedDurationForVideo(widget.controller.value.position)}/${getFormattedDurationForVideo(widget.controller.value.duration)}",
+                      "${getFormattedDurationForVideo(controller.value.position)}/${getFormattedDurationForVideo(controller.value.duration)}",
                       style:
                           const TextStyle(color: Colors.white54, fontSize: 12),
                     ))
@@ -230,10 +230,10 @@ class _ControlsOverlay extends ConsumerWidget {
                     Radius.circular(9.0),
                   ),
                 ),
-                initialValue: widget.controller.value.playbackSpeed,
+                initialValue: controller.value.playbackSpeed,
                 tooltip: 'Playback speed',
                 onSelected: (double speed) {
-                  widget.controller.setPlaybackSpeed(speed);
+                  controller.setPlaybackSpeed(speed);
                 },
                 position: PopupMenuPosition.over,
                 itemBuilder: (BuildContext context) {
@@ -256,15 +256,14 @@ class _ControlsOverlay extends ConsumerWidget {
                       color: Colors.black54,
                       border: Border.all(color: Colors.white60)),
                   child: Text(
-                    '${widget.controller.value.playbackSpeed}x',
+                    '${controller.value.playbackSpeed}x',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ),
               ),
               Tooltip(
-                message: !widget.isFullScreen
-                    ? "Go FullScreen"
-                    : "Back to mini player",
+                message:
+                    !isFullScreen ? "Go FullScreen" : "Back to mini player",
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 7,
@@ -304,7 +303,7 @@ class _ControlsOverlay extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(9),
                           color: Colors.black54,
                           border: Border.all(color: Colors.white60)),
-                      child: !widget.isFullScreen
+                      child: !isFullScreen
                           ? const Icon(
                               Icons.fullscreen,
                               size: 21,

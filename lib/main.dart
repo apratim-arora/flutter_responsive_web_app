@@ -3,11 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:responsive_1/models.dart';
 import 'package:responsive_1/widgets.dart';
 import 'package:split_view/split_view.dart';
-
-import 'reader_widget.dart';
 // import 'package:universal_html/html.dart' as my_html;
 
 void main() => runApp(const ProviderScope(child: MyApp()));
