@@ -3,6 +3,7 @@ import 'package:animate_gradient/animate_gradient.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -76,6 +77,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final Uuid uuid = const Uuid();
   bool eraserActive = false;
   late bool isMobile;
+  bool addNoteActive = false;
+  Size mainContainerSize = const Size(0, 0);
+
+  void updateMainContainerSize(Size size) {
+    debugPrint("Updating mainContainerSize");
+    Size lastSize = mainContainerSize;
+    if (lastSize != size) {
+      setState(() {
+        mainContainerSize = size;
+      });
+    }
+  }
 
   void _toggleEraser({bool? value}) {
     setState(() {
@@ -96,6 +109,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         );
       }
     });
+  }
+
+  void _toggleAddNote({bool? value}) {
+    setState(() {
+      addNoteActive = value ?? !addNoteActive;
+    });
+    if (addNoteActive) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Click anywhere add a note."),
+        duration: Duration(seconds: 2),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Notes adding mode off."),
+        duration: Duration(seconds: 2),
+      ));
+    }
   }
 
   String removeInlineTags(String htmlContent) {
@@ -163,6 +193,131 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     return uuid.v5(Uuid.NAMESPACE_URL, '$content-$position');
   }
 
+  void _addNoteAtPosition(Offset position, Size constraints) {
+    final width = constraints.width;
+    final height = constraints.height;
+    final TextEditingController noteController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add Note"),
+          content: TextField(
+            controller: noteController,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: "Enter your note here"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                if (noteController.text.isNotEmpty) {
+                  final Note newNote = Note(
+                    id: uuid.v4(),
+                    text: noteController.text,
+                    xPercent: (position.dx * 100) / width,
+                    yPercent: (position.dy * 100) / height,
+                  );
+                  ref
+                      .read(notesNotifierProvider(article.id).notifier)
+                      .addNote(newNote);
+                  Navigator.of(context).pop();
+                  setState(() {
+                    addNoteActive = false;
+                  });
+                }
+              },
+              child: const Text('ADD'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editNoteText(Note note) {
+    final TextEditingController noteController =
+        TextEditingController(text: note.text);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Note"),
+          content: TextField(
+            controller: noteController,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: "Edit your note"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                if (noteController.text.isNotEmpty) {
+                  final Note editedNote =
+                      note.copyWith(text: noteController.text);
+                  ref
+                      .read(notesNotifierProvider(article.id).notifier)
+                      .editNote(editedNote);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('SAVE'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Widget to display notes
+  List<Widget> _buildNotesOverlay(Size size) {
+    final overlayWidth = size.width; //constraints.maxWidth;
+    final overlayHeight = size.height; //constraints.maxHeight;
+    debugPrint("NOTES-OVERLAY-SIZE: $overlayWidth, $overlayHeight");
+    return ref.read(notesNotifierProvider(article.id)).map((note) {
+      final xPos = overlayWidth * note.xPercent / 100;
+      final yPos = overlayHeight * note.yPercent / 100;
+      return Positioned(
+        left: xPos,
+        top: yPos,
+        child: GestureDetector(
+          onTap: () => _editNoteText(note),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.yellow,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Text(note.text),
+          ),
+        ),
+      );
+    }).toList();
+    //chnage return type to Widget and try this also.
+    // return Positioned.fill(
+    //   child: Stack(
+    //     children: ref.read(notesNotifierProvider(article.id)).map((note) {
+    //       final xPos = overlayWidth * note.xPercent / 100;
+    //       final yPos = overlayHeight * note.yPercent / 100;
+    //       return Positioned(
+    //         left: xPos,
+    //         top: yPos,
+    //         child: GestureDetector(
+    //           onTap: () => _editNoteText(note),
+    //           child: Container(
+    //             padding: const EdgeInsets.all(8),
+    //             color: Colors.yellow,
+    //             // decoration: const BoxDecoration(
+    //             //   color: Colors.yellow,
+    //             // borderRadius: BorderRadius.circular(5),
+    //             // ),
+    //             child: Text(note.text),
+    //           ),
+    //         ),
+    //       );
+    //     }).toList(),
+    //   ),
+    // );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +333,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final highlights = ref.watch(highlightNotifierProvider);
     final scaleFactor = ref.watch(textScaleFactorProvider);
     final highlightColor = ref.watch(highLightColorProvider);
+    final notes = ref.watch(notesNotifierProvider(article.id));
+    debugPrint("Notes: $notes");
     ref.watch(textScaleFactorProvider);
     debugPrint(
         "BUILT: highlights = $highlights\t selectionOffset: (${_selection?.baseOffset},${_selection?.extentOffset}), pos: (${_selection?.start},${_selection?.end})");
@@ -304,6 +461,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           debugPrint("Cursor changed: $eraserActive");
                         },
                       ),
+                      AppbarIconButton(
+                        tooltip: "Add Note",
+                        icon: Icon(
+                          Icons.note_add,
+                          color: addNoteActive ? Colors.blue : Colors.black,
+                        ),
+                        onPressed: () {
+                          _toggleAddNote();
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -357,40 +524,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           ],
                         ),
                       ),
-                      //  BackdropFilter(
-                      //   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      //   child: Container(
-                      //     margin: const EdgeInsets.only(right: 5),
-                      //     height: 300,
-                      //     decoration: BoxDecoration(
-                      //       // color: const Color(0xfff4f4f4),
-                      //       color: Colors.white.withOpacity(0.25),
-                      //       borderRadius: BorderRadius.circular(7),
-                      //       // boxShadow: const [
-                      //       //   BoxShadow(
-                      //       //     offset: Offset(0, 5),
-                      //       //     blurRadius: 6,
-                      //       //     spreadRadius: -8,
-                      //       //   ),
-                      //       // ]
-                      //       gradient: LinearGradient(
-                      //         colors: [
-                      //           Colors.white.withOpacity(0.8),
-                      //           Colors.white.withOpacity(0.6),
-                      //         ],
-                      //         begin: AlignmentDirectional.topStart,
-                      //         end: AlignmentDirectional.bottomEnd,
-                      //       ),
-                      //     ),
-                      //     child: const Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: <Widget>[
-                      //         Text('Tags: Tag1, Tag2, Tag3'),
-                      //         Divider()
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
                     ),
                     Expanded(
                         flex: 3,
@@ -408,7 +541,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               Container(
                                 clipBehavior: Clip.antiAlias,
                                 constraints: BoxConstraints(
-                                    minHeight: screenHeight * 0.8),
+                                  minHeight: screenHeight * 0.8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xfff4f4f4),
                                   borderRadius: BorderRadius.circular(5),
@@ -435,37 +569,61 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                       const SizedBox(height: 20),
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
-                                        child: HtmlWidget(
-                                          widget.htmlContent,
-                                          // enableCaching: false,
-                                          customWidgetBuilder: (element) {
-                                            final position = element
-                                                    .parent?.children
-                                                    .indexOf(element) ??
-                                                0;
-                                            final content = element.outerHtml;
-                                            element.attributes['data-uuid'] =
-                                                generateUuidFromContent(
-                                                    content, position);
-                                            return null;
-                                          },
-                                          factoryBuilder: () =>
-                                              CustomWidgetFactory(
-                                            _onSelectionChanged,
-                                            ref,
-                                            _selectedUuid,
-                                            widget.article,
-                                          ),
-                                          onTapUrl: (url) {
-                                            debugPrint('tapped $url');
-                                            return false;
-                                          },
-                                          textStyle: TextStyle(
-                                              fontSize: 14 * scaleFactor),
-                                          rebuildTriggers: [
-                                            highlights,
-                                            scaleFactor
-                                          ],
+                                        child: MeasureSize(
+                                          onChange: (size) =>
+                                              updateMainContainerSize(size),
+                                          child: Stack(children: [
+                                            HtmlWidget(
+                                              widget.htmlContent,
+                                              customWidgetBuilder: (element) {
+                                                final position = element
+                                                        .parent?.children
+                                                        .indexOf(element) ??
+                                                    0;
+                                                final content =
+                                                    element.outerHtml;
+                                                element.attributes[
+                                                        'data-uuid'] =
+                                                    generateUuidFromContent(
+                                                        content, position);
+                                                return null;
+                                              },
+                                              factoryBuilder: () =>
+                                                  CustomWidgetFactory(
+                                                _onSelectionChanged,
+                                                ref,
+                                                _selectedUuid,
+                                                widget.article,
+                                              ),
+                                              onTapUrl: (url) {
+                                                debugPrint('tapped $url');
+                                                return false;
+                                              },
+                                              textStyle: TextStyle(
+                                                  fontSize: 14 * scaleFactor),
+                                              rebuildTriggers: [
+                                                highlights,
+                                                scaleFactor
+                                              ],
+                                            ),
+                                            // ..._buildNotesOverlay(constraints),
+                                            ..._buildNotesOverlay(
+                                                mainContainerSize),
+                                            if (addNoteActive)
+                                              Positioned.fill(
+                                                  child: GestureDetector(
+                                                behavior:
+                                                    HitTestBehavior.translucent,
+                                                onTapUp: (details) {
+                                                  _addNoteAtPosition(
+                                                      details.localPosition,
+                                                      mainContainerSize);
+                                                },
+                                                child: Container(
+                                                  color: Colors.black12,
+                                                ),
+                                              )),
+                                          ]),
                                         ),
                                       ),
                                     ],

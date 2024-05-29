@@ -244,15 +244,6 @@ class HighlightNotifier extends _$HighlightNotifier {
   }
 }
 
-@riverpod
-class Some extends _$Some {
-  @override
-  FutureOr<int> build() async {
-    await Future.delayed(const Duration(seconds: 2));
-    return 2;
-  }
-}
-
 @Riverpod(keepAlive: true)
 class VideoProgress extends _$VideoProgress {
   ///ask for provider[videoUUid]["currentPosition"] && provider[videoUUid]["totalDuration"]
@@ -307,5 +298,24 @@ class TextScaleFactor extends _$TextScaleFactor {
   void decreaseSizeFactor() {
     if (state < 0.7) return;
     state = state - 0.1;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class NotesNotifier extends _$NotesNotifier {
+  @override
+  List<Note> build(String articleId) {
+    //use articleId to fetch all notes from the database
+    return List<Note>.empty();
+  }
+
+  void addNote(Note note) => state = [...state, note];
+  void editNote(Note note) {
+    List<Note> newList = List.from(state);
+    newList.removeWhere((n) => n.id == note.id);
+    newList.add(note);
+    print("Updating notes state. Old State = $state");
+    state = newList;
+    print("New State = $state");
   }
 }

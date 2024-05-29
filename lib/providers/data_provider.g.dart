@@ -170,7 +170,7 @@ final highLightColorProvider =
 );
 
 typedef _$HighLightColor = AutoDisposeNotifier<Color>;
-String _$highlightNotifierHash() => r'375d763fcf6f97e776abcac1f7e7f7229774aa73';
+String _$highlightNotifierHash() => r'3f2f0ab1134a6135f8d258b82294f010c8c24c3c';
 
 /// See also [HighlightNotifier].
 @ProviderFor(HighlightNotifier)
@@ -186,20 +186,6 @@ final highlightNotifierProvider =
 );
 
 typedef _$HighlightNotifier = Notifier<Map<String, List<Highlight>>>;
-String _$someHash() => r'00dc88b04d39562a9fc184eff1410901cf848508';
-
-/// See also [Some].
-@ProviderFor(Some)
-final someProvider = AutoDisposeAsyncNotifierProvider<Some, int>.internal(
-  Some.new,
-  name: r'someProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$someHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$Some = AutoDisposeAsyncNotifier<int>;
 String _$videoProgressHash() => r'72afaad496f9b92aedcb6f13aa7bdbbe39b729d1';
 
 /// Copied from Dart SDK
@@ -382,5 +368,146 @@ final textScaleFactorProvider =
 );
 
 typedef _$TextScaleFactor = Notifier<double>;
+String _$notesNotifierHash() => r'03ebc398e130ba5a15985f98d44e6c2cdf00710c';
+
+abstract class _$NotesNotifier extends BuildlessNotifier<List<Note>> {
+  late final String articleId;
+
+  List<Note> build(
+    String articleId,
+  );
+}
+
+/// See also [NotesNotifier].
+@ProviderFor(NotesNotifier)
+const notesNotifierProvider = NotesNotifierFamily();
+
+/// See also [NotesNotifier].
+class NotesNotifierFamily extends Family<List<Note>> {
+  /// See also [NotesNotifier].
+  const NotesNotifierFamily();
+
+  /// See also [NotesNotifier].
+  NotesNotifierProvider call(
+    String articleId,
+  ) {
+    return NotesNotifierProvider(
+      articleId,
+    );
+  }
+
+  @override
+  NotesNotifierProvider getProviderOverride(
+    covariant NotesNotifierProvider provider,
+  ) {
+    return call(
+      provider.articleId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'notesNotifierProvider';
+}
+
+/// See also [NotesNotifier].
+class NotesNotifierProvider
+    extends NotifierProviderImpl<NotesNotifier, List<Note>> {
+  /// See also [NotesNotifier].
+  NotesNotifierProvider(
+    String articleId,
+  ) : this._internal(
+          () => NotesNotifier()..articleId = articleId,
+          from: notesNotifierProvider,
+          name: r'notesNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$notesNotifierHash,
+          dependencies: NotesNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              NotesNotifierFamily._allTransitiveDependencies,
+          articleId: articleId,
+        );
+
+  NotesNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.articleId,
+  }) : super.internal();
+
+  final String articleId;
+
+  @override
+  List<Note> runNotifierBuild(
+    covariant NotesNotifier notifier,
+  ) {
+    return notifier.build(
+      articleId,
+    );
+  }
+
+  @override
+  Override overrideWith(NotesNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: NotesNotifierProvider._internal(
+        () => create()..articleId = articleId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        articleId: articleId,
+      ),
+    );
+  }
+
+  @override
+  NotifierProviderElement<NotesNotifier, List<Note>> createElement() {
+    return _NotesNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NotesNotifierProvider && other.articleId == articleId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, articleId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin NotesNotifierRef on NotifierProviderRef<List<Note>> {
+  /// The parameter `articleId` of this provider.
+  String get articleId;
+}
+
+class _NotesNotifierProviderElement
+    extends NotifierProviderElement<NotesNotifier, List<Note>>
+    with NotesNotifierRef {
+  _NotesNotifierProviderElement(super.provider);
+
+  @override
+  String get articleId => (origin as NotesNotifierProvider).articleId;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
