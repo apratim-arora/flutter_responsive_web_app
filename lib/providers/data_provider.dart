@@ -318,4 +318,10 @@ class NotesNotifier extends _$NotesNotifier {
     state = newList;
     print("New State = $state");
   }
+
+  void deleteNote(Note note) {
+    List<Note> newList = List.from(state);
+    newList.removeWhere((n) => n.id == note.id);
+    state = newList;
+  }
 }

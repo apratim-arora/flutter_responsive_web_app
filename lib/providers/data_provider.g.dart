@@ -368,7 +368,7 @@ final textScaleFactorProvider =
 );
 
 typedef _$TextScaleFactor = Notifier<double>;
-String _$notesNotifierHash() => r'03ebc398e130ba5a15985f98d44e6c2cdf00710c';
+String _$notesNotifierHash() => r'c147e5c4efe282119ed45ff489de39adba124319';
 
 abstract class _$NotesNotifier extends BuildlessNotifier<List<Note>> {
   late final String articleId;

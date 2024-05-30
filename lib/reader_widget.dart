@@ -82,12 +82,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   void updateMainContainerSize(Size size) {
     debugPrint("Updating mainContainerSize");
-    Size lastSize = mainContainerSize;
-    if (lastSize != size) {
-      setState(() {
-        mainContainerSize = size;
-      });
-    }
+    setState(() {
+      mainContainerSize = size;
+    });
   }
 
   void _toggleEraser({bool? value}) {
@@ -193,77 +190,50 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     return uuid.v5(Uuid.NAMESPACE_URL, '$content-$position');
   }
 
-  void _addNoteAtPosition(Offset position, Size constraints) {
-    final width = constraints.width;
-    final height = constraints.height;
-    final TextEditingController noteController = TextEditingController();
+  Future<void> _addNoteAtPosition(
+      Offset position, Size contentContainerSize) async {
+    final xPercent = (position.dx * 100) / contentContainerSize.width;
+    final yPercent = (position.dy * 100) / contentContainerSize.height;
+
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Add Note"),
-          content: TextField(
-            controller: noteController,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: "Enter your note here"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                if (noteController.text.isNotEmpty) {
-                  final Note newNote = Note(
-                    id: uuid.v4(),
-                    text: noteController.text,
-                    xPercent: (position.dx * 100) / width,
-                    yPercent: (position.dy * 100) / height,
-                  );
-                  ref
-                      .read(notesNotifierProvider(article.id).notifier)
-                      .addNote(newNote);
-                  Navigator.of(context).pop();
-                  setState(() {
-                    addNoteActive = false;
-                  });
-                }
-              },
-              child: const Text('ADD'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AddNoteDialog((noteText, iconImageIndex) {
+        if (noteText.isNotEmpty) {
+          final Note newNote = Note(
+            id: uuid.v4(),
+            iconImageIndex: iconImageIndex,
+            text: noteText,
+            xPercent: xPercent,
+            yPercent: yPercent,
+          );
+          ref.read(notesNotifierProvider(article.id).notifier).addNote(newNote);
+          setState(() {
+            addNoteActive = false;
+          });
+        }
+      }),
     );
   }
 
-  void _editNoteText(Note note) {
-    final TextEditingController noteController =
-        TextEditingController(text: note.text);
+  Future<void> _editNoteText(Note note) async {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Edit Note"),
-          content: TextField(
-            controller: noteController,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: "Edit your note"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                if (noteController.text.isNotEmpty) {
-                  final Note editedNote =
-                      note.copyWith(text: noteController.text);
-                  ref
-                      .read(notesNotifierProvider(article.id).notifier)
-                      .editNote(editedNote);
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('SAVE'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AddNoteDialog(
+        noteForEditing: note,
+        onDelete: () => ref
+            .read(notesNotifierProvider(article.id).notifier)
+            .deleteNote(note),
+        (noteText, iconImageIndex) {
+          Note updatedNote =
+              note.copyWith(text: noteText, iconImage: iconImageIndex);
+          ref
+              .read(notesNotifierProvider(article.id).notifier)
+              .editNote(updatedNote);
+          setState(() {
+            addNoteActive = false;
+          });
+        },
+      ),
     );
   }
 
@@ -279,19 +249,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         left: xPos,
         top: yPos,
         child: GestureDetector(
-          onTap: () => _editNoteText(note),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.yellow,
-              borderRadius: BorderRadius.circular(5),
+            onTap: () => _editNoteText(note),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Tooltip(
+                  message: note.text,
+                  child: SizedBox(
+                    width: 38,
+                    child: Image.asset(
+                        "assets/images/note_image/note_image_${note.iconImageIndex}.png"),
+                  )),
+            )
+            //  Container(
+            //   padding: const EdgeInsets.all(8),
+            //   decoration: BoxDecoration(
+            //     color: Colors.yellow,
+            //     borderRadius: BorderRadius.circular(5),
+            //   ),
+            //   child: Text(note.text),
+            // ),
             ),
-            child: Text(note.text),
-          ),
-        ),
       );
     }).toList();
-    //chnage return type to Widget and try this also.
+    //chnage return type to Widget and try this also.(works)
     // return Positioned.fill(
     //   child: Stack(
     //     children: ref.read(notesNotifierProvider(article.id)).map((note) {
@@ -567,13 +547,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 20),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: MeasureSize(
-                                          onChange: (size) =>
-                                              updateMainContainerSize(size),
-                                          child: Stack(children: [
-                                            HtmlWidget(
+                                      MeasureSize(
+                                        onChange: (size) =>
+                                            updateMainContainerSize(size),
+                                        child: Stack(children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: HtmlWidget(
                                               widget.htmlContent,
                                               customWidgetBuilder: (element) {
                                                 final position = element
@@ -606,12 +586,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                                 scaleFactor
                                               ],
                                             ),
-                                            // ..._buildNotesOverlay(constraints),
-                                            ..._buildNotesOverlay(
-                                                mainContainerSize),
-                                            if (addNoteActive)
-                                              Positioned.fill(
-                                                  child: GestureDetector(
+                                          ),
+                                          // ..._buildNotesOverlay(constraints),
+                                          ..._buildNotesOverlay(
+                                              mainContainerSize),
+                                          if (addNoteActive)
+                                            Positioned.fill(
+                                                child: MouseRegion(
+                                              cursor: SystemMouseCursors.copy,
+                                              child: GestureDetector(
                                                 behavior:
                                                     HitTestBehavior.translucent,
                                                 onTapUp: (details) {
@@ -622,9 +605,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                                 child: Container(
                                                   color: Colors.black12,
                                                 ),
-                                              )),
-                                          ]),
-                                        ),
+                                              ),
+                                            )),
+                                        ]),
                                       ),
                                     ],
                                   ),

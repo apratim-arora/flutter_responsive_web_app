@@ -1,16 +1,17 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 class Note {
   final String id;
+  final int iconImageIndex;
   final String text;
   final double xPercent; // X position as a percentage of screen width
   final double yPercent; // Y position as a percentage of screen height
 
   Note({
     required this.id,
+    required this.iconImageIndex,
     required this.text,
     required this.xPercent,
     required this.yPercent,
@@ -18,12 +19,14 @@ class Note {
 
   Note copyWith({
     String? id,
+    int? iconImage,
     String? text,
     double? xPercent,
     double? yPercent,
   }) {
     return Note(
       id: id ?? this.id,
+      iconImageIndex: iconImage ?? this.iconImageIndex,
       text: text ?? this.text,
       xPercent: xPercent ?? this.xPercent,
       yPercent: yPercent ?? this.yPercent,
@@ -32,7 +35,7 @@ class Note {
 
   @override
   String toString() {
-    return 'Note(id: $id, text: $text, xPercent: $xPercent, yPercent: $yPercent)';
+    return 'Note(id: $id, iconImage: $iconImageIndex, text: $text, xPercent: $xPercent, yPercent: $yPercent)';
   }
 }
 

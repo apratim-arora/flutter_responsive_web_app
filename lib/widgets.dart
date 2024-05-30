@@ -4,6 +4,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -1977,13 +1978,158 @@ class MeasureSize extends StatefulWidget {
 }
 
 class MeasureSizeState extends State<MeasureSize> {
+  Size? oldSize;
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.size != null) {
+      if (oldSize == null || oldSize != context.size) {
+        oldSize = context.size;
         widget.onChange(context.size!);
       }
     });
     return widget.child;
+  }
+}
+
+////////////beautifil dialog
+class AddNoteDialog extends ConsumerStatefulWidget {
+  const AddNoteDialog(this.noteSubmission,
+      {super.key, this.noteForEditing, this.onDelete})
+      : assert(
+            (noteForEditing != null && onDelete != null) ||
+                (noteForEditing == null && onDelete == null),
+            "both noteForEditing and onDelete should either be null or have a value");
+  final Note? noteForEditing;
+  final VoidCallback? onDelete;
+  final void Function(String noteText, int iconImageIndex) noteSubmission;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _AddNoteDialogState();
+}
+
+class _AddNoteDialogState extends ConsumerState<AddNoteDialog> {
+  late TextEditingController _noteController;
+  late List<bool> _isSelected;
+  bool isMobile = false;
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    _noteController = TextEditingController();
+    if (widget.noteForEditing != null) {
+      _noteController.text = widget.noteForEditing!.text;
+      _isSelected = List.generate(
+          5, (index) => index == widget.noteForEditing!.iconImageIndex);
+    } else {
+      _isSelected = [true, false, false, false, false];
+    }
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Note? note = widget.noteForEditing;
+    double width = MediaQuery.of(context).size.width;
+    isMobile = width < 600;
+    return AlertDialog(
+      title: note != null
+          ? const Text("Edit the Note Here")
+          : const Text('Add a Note Here'),
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: !isMobile ? width * 0.34 : null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _noteController,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  hintText: 'Enter your note here...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 5),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Note Icon:",
+                  style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w400),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(5, (index) {
+                  return Flexible(
+                    child: FittedBox(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            for (int i = 0; i < _isSelected.length; i++) {
+                              _isSelected[i] = i == index;
+                            }
+                          });
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: _isSelected[index]
+                              ? Colors.deepPurple
+                              : Colors.grey[300],
+                          maxRadius: 27,
+                          child: CircleAvatar(
+                            maxRadius: 25,
+                            child: Image.asset(
+                              "assets/images/note_image/note_image_$index.png",
+                              width: index < 2
+                                  ? 34
+                                  : 41, //first 2 icons are bigger
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        if (note != null)
+          TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (widget.onDelete != null) {
+                  widget.onDelete!();
+                }
+              },
+              icon: const Icon(Icons.delete_outline_outlined),
+              label: const Text("Delete Note")),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            String note = _noteController.text;
+            int selectedImage = _isSelected.indexOf(true);
+            Navigator.of(context).pop();
+            widget.noteSubmission(note, selectedImage);
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
