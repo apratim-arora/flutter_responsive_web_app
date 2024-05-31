@@ -325,3 +325,15 @@ class NotesNotifier extends _$NotesNotifier {
     state = newList;
   }
 }
+
+@Riverpod(keepAlive: true)
+class ScrollProgress extends _$ScrollProgress {
+  @override
+  double build() {
+    return 0;
+  }
+
+  void setScrollProgress(double position) {
+    state = position;
+  }
+}

@@ -509,5 +509,22 @@ class _NotesNotifierProviderElement
   @override
   String get articleId => (origin as NotesNotifierProvider).articleId;
 }
+
+String _$scrollProgressHash() => r'9497198a4cbdaee000ec44bc344b81833be0275e';
+
+/// See also [ScrollProgress].
+@ProviderFor(ScrollProgress)
+final scrollProgressProvider =
+    NotifierProvider<ScrollProgress, double>.internal(
+  ScrollProgress.new,
+  name: r'scrollProgressProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$scrollProgressHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ScrollProgress = Notifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

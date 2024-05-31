@@ -2133,3 +2133,73 @@ class _AddNoteDialogState extends ConsumerState<AddNoteDialog> {
     );
   }
 }
+
+//////progress bar
+class ScrollListener extends ConsumerStatefulWidget {
+  final Widget child;
+
+  const ScrollListener({required this.child, super.key});
+
+  @override
+  _ScrollListenerState createState() => _ScrollListenerState();
+}
+
+class _ScrollListenerState extends ConsumerState<ScrollListener> {
+  final ScrollController _scrollController = ScrollController();
+  double _totalContentHeight = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      ref
+          .read(scrollProgressProvider.notifier)
+          .setScrollProgress(_scrollController.position.pixels);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (scrollNotification) {
+        if (scrollNotification is ScrollUpdateNotification) {
+          _totalContentHeight = scrollNotification.metrics.maxScrollExtent;
+          ref.read(scrollProgressProvider.notifier).setScrollProgress(
+              (scrollNotification.metrics.pixels / _totalContentHeight)
+                  .clamp(0.0, 1.0));
+        }
+        return false;
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class ProgressBar extends ConsumerWidget {
+  const ProgressBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scrollProgress = ref.watch(scrollProgressProvider);
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Container(
+          height: 6, // Adjust height to make it minimal
+          color: Colors.blue, // Customize the color as needed
+          width: MediaQuery.of(context).size.width * scrollProgress,
+        ),
+      ),
+    );
+  }
+}

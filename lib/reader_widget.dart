@@ -334,292 +334,314 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           Color.fromARGB(255, 54, 190, 165),
         ],
         duration: const Duration(seconds: 10),
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              leading: const Icon(Icons.arrow_back),
-              floating: true,
-              snap: true,
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xffAEC6F6),
-                      Color.fromARGB(255, 115, 161, 254)
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Align(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AppbarIconButton(
-                        tooltip: "Bigger Text",
-                        icon: const Icon(Icons.add),
-                        onPressed: () => ref
-                            .read(textScaleFactorProvider.notifier)
-                            .increaseSizeFactor(),
-                      ),
-                      AppbarIconButton(
-                        tooltip: "Smaller Text",
-                        icon: const Icon(CupertinoIcons.minus),
-                        onPressed: () => ref
-                            .read(textScaleFactorProvider.notifier)
-                            .decreaseSizeFactor(),
-                      ),
-                      AppbarIconButton(
-                        tooltip: "Highlight Selection",
-                        icon: Icon(
-                          CupertinoIcons.pencil,
-                          color: highlightColor,
+        child: Stack(
+          children: [
+            ScrollListener(
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    leading: const Icon(Icons.arrow_back),
+                    floating: true,
+                    snap: true,
+                    flexibleSpace: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color(0xffAEC6F6),
+                            Color.fromARGB(255, 115, 161, 254)
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        onPressed: (_selection != null && _selectedUuid != null)
-                            ? () {
-                                ref
-                                    .read(highlightNotifierProvider.notifier)
-                                    .addHighlight(
-                                      _selectedUuid!,
-                                      TextRange(
-                                          start: _selection!.start,
-                                          end: _selection!.end),
-                                    );
-                                _selection = null;
-                              }
-                            : null,
                       ),
-                      PopupMenuButton(
-                        position: PopupMenuPosition.under,
-                        constraints: const BoxConstraints(
-                            minWidth: double.minPositive, maxWidth: 5 * 56.0),
-                        child: const AppbarIconButton(
-                          tooltip: "Highlight color",
-                          icon: Icon(
-                            Icons.arrow_drop_down_circle_outlined,
-                          ),
-                          onPressed: null,
-                        ),
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            onTap: () => ref
-                                .read(highLightColorProvider.notifier)
-                                .updateColor(Colors.yellow),
-                            child:
-                                const ColorSelectionDropdownItem(Colors.yellow),
-                          ),
-                          PopupMenuItem(
-                            onTap: () => ref
-                                .read(highLightColorProvider.notifier)
-                                .updateColor(Colors.red),
-                            child: const ColorSelectionDropdownItem(Colors.red),
-                          ),
-                          PopupMenuItem(
-                            onTap: () => ref
-                                .read(highLightColorProvider.notifier)
-                                .updateColor(Colors.green),
-                            child:
-                                const ColorSelectionDropdownItem(Colors.green),
-                          ),
-                          PopupMenuItem(
-                            onTap: () => ref
-                                .read(highLightColorProvider.notifier)
-                                .updateColor(Colors.blue),
-                            child:
-                                const ColorSelectionDropdownItem(Colors.blue),
-                          ),
-                        ],
-                      ),
-                      AppbarIconButton(
-                        tooltip: "Erase Highlight",
-                        icon: Icon(
-                          Icons.stay_current_landscape_rounded,
-                          color: eraserActive ? Colors.blue : Colors.black,
-                        ),
-                        onPressed: () {
-                          _toggleEraser();
-                          debugPrint("Cursor changed: $eraserActive");
-                        },
-                      ),
-                      AppbarIconButton(
-                        tooltip: "Add Note",
-                        icon: Icon(
-                          Icons.note_add,
-                          color: addNoteActive ? Colors.blue : Colors.black,
-                        ),
-                        onPressed: () {
-                          _toggleAddNote();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      flex: 1,
-                      child: GlassContainer(
-                        margin: const EdgeInsets.only(right: 5, left: 15),
-                        padding: const EdgeInsets.all(9),
-                        topBorderRadius: 12,
-                        allowBottomRadius: true,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                      child: Align(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SplitScreenTitle(
-                              text: "About",
-                              iconData: Icons.info_outline,
-                              trailing: IconButton.outlined(
-                                  style: OutlinedButton.styleFrom(
-                                      side:
-                                          const BorderSide(color: Colors.grey)),
-                                  color: Colors.blue,
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    size: 20,
-                                  )),
+                            AppbarIconButton(
+                              tooltip: "Bigger Text",
+                              icon: const Icon(Icons.add),
+                              onPressed: () => ref
+                                  .read(textScaleFactorProvider.notifier)
+                                  .increaseSizeFactor(),
                             ),
-                            const SizedBox(height: 7),
-                            Container(
-                                clipBehavior: Clip.antiAlias,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xfff4f4f4),
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                    color: Colors.grey[350]!,
-                                  ),
+                            AppbarIconButton(
+                              tooltip: "Smaller Text",
+                              icon: const Icon(CupertinoIcons.minus),
+                              onPressed: () => ref
+                                  .read(textScaleFactorProvider.notifier)
+                                  .decreaseSizeFactor(),
+                            ),
+                            AppbarIconButton(
+                              tooltip: "Highlight Selection",
+                              icon: Icon(
+                                CupertinoIcons.pencil,
+                                color: highlightColor,
+                              ),
+                              onPressed:
+                                  (_selection != null && _selectedUuid != null)
+                                      ? () {
+                                          ref
+                                              .read(highlightNotifierProvider
+                                                  .notifier)
+                                              .addHighlight(
+                                                _selectedUuid!,
+                                                TextRange(
+                                                    start: _selection!.start,
+                                                    end: _selection!.end),
+                                              );
+                                          _selection = null;
+                                        }
+                                      : null,
+                            ),
+                            PopupMenuButton(
+                              position: PopupMenuPosition.under,
+                              constraints: const BoxConstraints(
+                                  minWidth: double.minPositive,
+                                  maxWidth: 5 * 56.0),
+                              child: const AppbarIconButton(
+                                tooltip: "Highlight color",
+                                icon: Icon(
+                                  Icons.arrow_drop_down_circle_outlined,
                                 ),
-                                child: aboutArticleColumn(
-                                    article,
-                                    ref.read(
-                                        selectedTagListForFilteringProvider)))
+                                onPressed: null,
+                              ),
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  onTap: () => ref
+                                      .read(highLightColorProvider.notifier)
+                                      .updateColor(Colors.yellow),
+                                  child: const ColorSelectionDropdownItem(
+                                      Colors.yellow),
+                                ),
+                                PopupMenuItem(
+                                  onTap: () => ref
+                                      .read(highLightColorProvider.notifier)
+                                      .updateColor(Colors.red),
+                                  child: const ColorSelectionDropdownItem(
+                                      Colors.red),
+                                ),
+                                PopupMenuItem(
+                                  onTap: () => ref
+                                      .read(highLightColorProvider.notifier)
+                                      .updateColor(Colors.green),
+                                  child: const ColorSelectionDropdownItem(
+                                      Colors.green),
+                                ),
+                                PopupMenuItem(
+                                  onTap: () => ref
+                                      .read(highLightColorProvider.notifier)
+                                      .updateColor(Colors.blue),
+                                  child: const ColorSelectionDropdownItem(
+                                      Colors.blue),
+                                ),
+                              ],
+                            ),
+                            AppbarIconButton(
+                              tooltip: "Erase Highlight",
+                              icon: Icon(
+                                Icons.stay_current_landscape_rounded,
+                                color:
+                                    eraserActive ? Colors.blue : Colors.black,
+                              ),
+                              onPressed: () {
+                                _toggleEraser();
+                                debugPrint("Cursor changed: $eraserActive");
+                              },
+                            ),
+                            AppbarIconButton(
+                              tooltip: "Add Note",
+                              icon: Icon(
+                                Icons.note_add,
+                                color:
+                                    addNoteActive ? Colors.blue : Colors.black,
+                              ),
+                              onPressed: () {
+                                _toggleAddNote();
+                              },
+                            ),
                           ],
                         ),
                       ),
                     ),
-                    Expanded(
-                        flex: 3,
-                        child: GlassContainer(
-                          padding: const EdgeInsets.all(9),
-                          margin: const EdgeInsets.symmetric(horizontal: 15),
-                          topBorderRadius: 12,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SplitScreenTitle(
-                                  text: "Article",
-                                  iconData: Icons.article_outlined),
-                              const SizedBox(height: 7),
-                              Container(
-                                clipBehavior: Clip.antiAlias,
-                                constraints: BoxConstraints(
-                                  minHeight: screenHeight * 0.8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xfff4f4f4),
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                    color: Colors.grey[350]!,
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            flex: 1,
+                            child: GlassContainer(
+                              margin: const EdgeInsets.only(right: 5, left: 15),
+                              padding: const EdgeInsets.all(9),
+                              topBorderRadius: 12,
+                              allowBottomRadius: true,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SplitScreenTitle(
+                                    text: "About",
+                                    iconData: Icons.info_outline,
+                                    trailing: IconButton.outlined(
+                                        style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                                color: Colors.grey)),
+                                        color: Colors.blue,
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () {},
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          size: 20,
+                                        )),
                                   ),
-                                ),
-                                child: DefaultTabController(
-                                  length: 3,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      const TabBar(
-                                        isScrollable: true,
-                                        tabAlignment: TabAlignment.start,
-                                        indicatorColor: Colors.blue,
-                                        tabs: [
-                                          Tab(text: "Article"),
-                                          Tab(text: "Highlights"),
-                                          Tab(text: "Summary"),
-                                        ],
+                                  const SizedBox(height: 7),
+                                  Container(
+                                      clipBehavior: Clip.antiAlias,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xfff4f4f4),
+                                        borderRadius: BorderRadius.circular(5),
+                                        border: Border.all(
+                                          color: Colors.grey[350]!,
+                                        ),
                                       ),
-                                      const SizedBox(height: 20),
-                                      MeasureSize(
-                                        onChange: (size) =>
-                                            updateMainContainerSize(size),
-                                        child: Stack(children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: HtmlWidget(
-                                              widget.htmlContent,
-                                              customWidgetBuilder: (element) {
-                                                final position = element
-                                                        .parent?.children
-                                                        .indexOf(element) ??
-                                                    0;
-                                                final content =
-                                                    element.outerHtml;
-                                                element.attributes[
-                                                        'data-uuid'] =
-                                                    generateUuidFromContent(
-                                                        content, position);
-                                                return null;
-                                              },
-                                              factoryBuilder: () =>
-                                                  CustomWidgetFactory(
-                                                _onSelectionChanged,
-                                                ref,
-                                                _selectedUuid,
-                                                widget.article,
-                                              ),
-                                              onTapUrl: (url) {
-                                                debugPrint('tapped $url');
-                                                return false;
-                                              },
-                                              textStyle: TextStyle(
-                                                  fontSize: 14 * scaleFactor),
-                                              rebuildTriggers: [
-                                                highlights,
-                                                scaleFactor
+                                      child: aboutArticleColumn(
+                                          article,
+                                          ref.read(
+                                              selectedTagListForFilteringProvider)))
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                              flex: 3,
+                              child: GlassContainer(
+                                padding: const EdgeInsets.all(9),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 15),
+                                topBorderRadius: 12,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    const SplitScreenTitle(
+                                        text: "Article",
+                                        iconData: Icons.article_outlined),
+                                    const SizedBox(height: 7),
+                                    Container(
+                                      clipBehavior: Clip.antiAlias,
+                                      constraints: BoxConstraints(
+                                        minHeight: screenHeight * 0.8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xfff4f4f4),
+                                        borderRadius: BorderRadius.circular(5),
+                                        border: Border.all(
+                                          color: Colors.grey[350]!,
+                                        ),
+                                      ),
+                                      child: DefaultTabController(
+                                        length: 3,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            const TabBar(
+                                              isScrollable: true,
+                                              tabAlignment: TabAlignment.start,
+                                              indicatorColor: Colors.blue,
+                                              tabs: [
+                                                Tab(text: "Article"),
+                                                Tab(text: "Highlights"),
+                                                Tab(text: "Summary"),
                                               ],
                                             ),
-                                          ),
-                                          // ..._buildNotesOverlay(constraints),
-                                          ..._buildNotesOverlay(
-                                              mainContainerSize),
-                                          if (addNoteActive)
-                                            Positioned.fill(
-                                                child: MouseRegion(
-                                              cursor: SystemMouseCursors.copy,
-                                              child: GestureDetector(
-                                                behavior:
-                                                    HitTestBehavior.translucent,
-                                                onTapUp: (details) {
-                                                  _addNoteAtPosition(
-                                                      details.localPosition,
-                                                      mainContainerSize);
-                                                },
-                                                child: Container(
-                                                  color: Colors.black12,
+                                            const SizedBox(height: 20),
+                                            MeasureSize(
+                                              onChange: (size) =>
+                                                  updateMainContainerSize(size),
+                                              child: Stack(children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: HtmlWidget(
+                                                    widget.htmlContent,
+                                                    customWidgetBuilder:
+                                                        (element) {
+                                                      final position = element
+                                                              .parent?.children
+                                                              .indexOf(
+                                                                  element) ??
+                                                          0;
+                                                      final content =
+                                                          element.outerHtml;
+                                                      element.attributes[
+                                                              'data-uuid'] =
+                                                          generateUuidFromContent(
+                                                              content,
+                                                              position);
+                                                      return null;
+                                                    },
+                                                    factoryBuilder: () =>
+                                                        CustomWidgetFactory(
+                                                      _onSelectionChanged,
+                                                      ref,
+                                                      _selectedUuid,
+                                                      widget.article,
+                                                    ),
+                                                    onTapUrl: (url) {
+                                                      debugPrint('tapped $url');
+                                                      return false;
+                                                    },
+                                                    textStyle: TextStyle(
+                                                        fontSize:
+                                                            14 * scaleFactor),
+                                                    rebuildTriggers: [
+                                                      highlights,
+                                                      scaleFactor
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            )),
-                                        ]),
+                                                // ..._buildNotesOverlay(constraints),
+                                                ..._buildNotesOverlay(
+                                                    mainContainerSize),
+                                                if (addNoteActive)
+                                                  Positioned.fill(
+                                                      child: MouseRegion(
+                                                    cursor:
+                                                        SystemMouseCursors.copy,
+                                                    child: GestureDetector(
+                                                      behavior: HitTestBehavior
+                                                          .translucent,
+                                                      onTapUp: (details) {
+                                                        _addNoteAtPosition(
+                                                            details
+                                                                .localPosition,
+                                                            mainContainerSize);
+                                                      },
+                                                      child: Container(
+                                                        color: Colors.black12,
+                                                      ),
+                                                    ),
+                                                  )),
+                                              ]),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
-                                  ),
+                                    )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                        )),
-                  ],
-                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+            const ProgressBar(),
           ],
         ),
       ),
