@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
@@ -227,18 +228,32 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   void initState() {
     super.initState();
-
     article = widget.article;
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(
         const Duration(milliseconds: 300),
         () {
           if (customScrollViewController.hasClients) {
-            customScrollViewController.animateTo(
-                ref.read(scrollPositionProvider(article.id)).current,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.bounceIn);
+            double progress = ref.read(scrollProgressProvider(article.id)) *
+                customScrollViewController.position.maxScrollExtent;
+            double mark =
+                0.05 * customScrollViewController.position.maxScrollExtent;
+            print(
+                "SCROLL HAS CLIENT, SCROLL TO: (${ref.read(scrollProgressProvider(article.id))}%)*${customScrollViewController.position.maxScrollExtent}=${ref.read(scrollProgressProvider(article.id)) * customScrollViewController.position.maxScrollExtent}");
+
+            if (progress > mark) {
+              customScrollViewController
+                  .animateTo(mark,
+                      duration: const Duration(milliseconds: 100),
+                      curve: Curves.bounceIn)
+                  .then(
+                    (value) => customScrollViewController.jumpTo(progress),
+                  );
+            } else {
+              customScrollViewController.animateTo(progress,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.bounceIn);
+            }
           } else {
             print("SCROLL CONTROLLER HAS NO CLIENTS");
           }

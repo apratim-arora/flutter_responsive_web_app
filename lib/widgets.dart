@@ -2165,11 +2165,12 @@ class ScrollListenerState extends ConsumerState<ScrollListener> {
           print(
               "SCROLLED: CURRENT:(${scrollNotification.metrics.pixels}), MAX:($_totalContentHeight)");
           ref
-              .read(scrollPositionProvider(widget.article.id).notifier)
-              .setScrollPosition(ScrollData(scrollNotification.metrics.pixels,
-                  scrollNotification.metrics.maxScrollExtent));
+              .read(scrollProgressProvider(widget.article.id).notifier)
+              .setScrollProgress(
+                  (scrollNotification.metrics.pixels / _totalContentHeight)
+                      .clamp(0.0, 1.0));
           print(
-              "SCROLL_PROGRESS: ${ref.read(scrollPositionProvider(widget.article.id))}");
+              "SCROLL_PROGRESS: ${ref.read(scrollProgressProvider(widget.article.id))}");
         }
         return false;
       },
@@ -2184,7 +2185,7 @@ class ProgressBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(scrollPositionProvider(article.id));
+    final scrollProgress = ref.watch(scrollProgressProvider(article.id));
 
     return Positioned(
       top: 0,
@@ -2200,10 +2201,7 @@ class ProgressBar extends ConsumerWidget {
             Color(0xffff0b93),
             Color.fromARGB(255, 164, 51, 156),
           ])),
-          width: MediaQuery.of(context).size.width *
-              ref
-                  .read(scrollPositionProvider(article.id).notifier)
-                  .getScrollProgress(),
+          width: MediaQuery.of(context).size.width * scrollProgress,
         ),
       ),
     );
