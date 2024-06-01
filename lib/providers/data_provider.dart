@@ -327,13 +327,25 @@ class NotesNotifier extends _$NotesNotifier {
 }
 
 @Riverpod(keepAlive: true)
-class ScrollProgress extends _$ScrollProgress {
+class ScrollPosition extends _$ScrollPosition {
   @override
-  double build() {
-    return 0;
+  ScrollData build(String articleId) {
+    //get article specific progress
+    return ScrollData(0, 1);
   }
 
-  void setScrollProgress(double position) {
-    state = position;
+  void setScrollPosition(ScrollData scrollData) {
+    state = scrollData;
+  }
+
+  double getScrollProgress({double? updatedMaxExtent}) {
+    if (updatedMaxExtent == null) {
+      if (state.total == null) {
+        return 0.0;
+      } else {
+        return (state.current / state.total!).clamp(0.0, 1.0);
+      }
+    }
+    return (state.current / updatedMaxExtent).clamp(0.0, 1.0);
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:animate_gradient/animate_gradient.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -79,6 +78,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   late bool isMobile;
   bool addNoteActive = false;
   Size mainContainerSize = const Size(0, 0);
+  ScrollController customScrollViewController = ScrollController(
+      // onAttach: (position) {
+      //   print(
+      //       "Attached, position: $position, extent: ${position.maxScrollExtent}");
+      // },
+      );
 
   void updateMainContainerSize(Size size) {
     debugPrint("Updating mainContainerSize");
@@ -125,49 +130,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
-  String removeInlineTags(String htmlContent) {
-    // Parse the HTML content
-    final document = html_parser.parse(htmlContent);
-
-    // Function to recursively process each node
-    String processNode(dom.Node node) {
-      // If it's an element and not a text node
-      if (node.nodeType == dom.Node.ELEMENT_NODE) {
-        final element = node as dom.Element;
-
-        // If the element is a block-level element, keep it but process its children
-        if ([
-          'p',
-          'div',
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          'h5',
-          'h6',
-          'article',
-          'section'
-        ].contains(element.localName)) {
-          // Recursively process child nodes and reconstruct the element without inline children
-          final childContent =
-              element.nodes.map((child) => processNode(child)).join('');
-          return '<${element.localName}>$childContent</${element.localName}>';
-        } else {
-          // If it's an inline element, return its text content only
-          return element.text;
-        }
-      } else if (node.nodeType == dom.Node.TEXT_NODE) {
-        // If it's a text node, return its text
-        return node.text!;
-      }
-      return '';
-    }
-
-    // Process each node in the body and reconstruct the HTML
-    final processedContent =
-        document.body!.nodes.map((node) => processNode(node)).join('');
-
-    return processedContent;
+  String generateUuidFromContent(String content, int position) {
+    return uuid.v5(Uuid.NAMESPACE_URL, '$content-$position');
   }
 
   void _onSelectionChanged(TextSelection selection,
@@ -184,10 +148,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     });
     debugPrint(
         "FUNCTION:selection var update offset= (${selection.baseOffset},${selection.extentOffset}), position:(${selection.start},${selection.end})");
-  }
-
-  String generateUuidFromContent(String content, int position) {
-    return uuid.v5(Uuid.NAMESPACE_URL, '$content-$position');
   }
 
   Future<void> _addNoteAtPosition(
@@ -259,43 +219,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     child: Image.asset(
                         "assets/images/note_image/note_image_${note.iconImageIndex}.png"),
                   )),
-            )
-            //  Container(
-            //   padding: const EdgeInsets.all(8),
-            //   decoration: BoxDecoration(
-            //     color: Colors.yellow,
-            //     borderRadius: BorderRadius.circular(5),
-            //   ),
-            //   child: Text(note.text),
-            // ),
-            ),
+            )),
       );
     }).toList();
-    //chnage return type to Widget and try this also.(works)
-    // return Positioned.fill(
-    //   child: Stack(
-    //     children: ref.read(notesNotifierProvider(article.id)).map((note) {
-    //       final xPos = overlayWidth * note.xPercent / 100;
-    //       final yPos = overlayHeight * note.yPercent / 100;
-    //       return Positioned(
-    //         left: xPos,
-    //         top: yPos,
-    //         child: GestureDetector(
-    //           onTap: () => _editNoteText(note),
-    //           child: Container(
-    //             padding: const EdgeInsets.all(8),
-    //             color: Colors.yellow,
-    //             // decoration: const BoxDecoration(
-    //             //   color: Colors.yellow,
-    //             // borderRadius: BorderRadius.circular(5),
-    //             // ),
-    //             child: Text(note.text),
-    //           ),
-    //         ),
-    //       );
-    //     }).toList(),
-    //   ),
-    // );
   }
 
   @override
@@ -303,7 +229,52 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     super.initState();
 
     article = widget.article;
-    WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(
+        const Duration(milliseconds: 300),
+        () {
+          if (customScrollViewController.hasClients) {
+            customScrollViewController.animateTo(
+                ref.read(scrollPositionProvider(article.id)).current,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.bounceIn);
+          } else {
+            print("SCROLL CONTROLLER HAS NO CLIENTS");
+          }
+        },
+      );
+      // setState(() {
+      // print(
+      //     "SCROLL_INIT to PROGRESS:${ref.read(scrollProgressProvider(article.id))}; EXTENT: ${customScrollViewController.position.maxScrollExtent}");
+      // customScrollViewController.animateTo(
+      //     ref.read(scrollProgressProvider(article.id)) *
+      //         customScrollViewController.position.maxScrollExtent,
+      //     duration: const Duration(milliseconds: 500),
+      //     curve: Curves.easeIn);
+      // Future.delayed(
+      //   const Duration(seconds: 1),
+      //   () => print(
+      //       "now after 1 sec, extent total: ${customScrollViewController.position.extentTotal}, ${customScrollViewController.position.maxScrollExtent}"),
+      // );
+      // });
+
+      // Future.delayed(
+      //     const Duration(seconds: 1),
+      //     () => setState(() {
+      //           customScrollViewController.animateTo(
+      //               ref.read(scrollProgressProvider(article.id)) *
+      //                   customScrollViewController.position.maxScrollExtent,
+      //               duration: const Duration(milliseconds: 500),
+      //               curve: Curves.easeIn);
+      //         }));
+    });
+  }
+
+  @override
+  void dispose() {
+    customScrollViewController.dispose();
+    super.dispose();
   }
 
   @override
@@ -318,332 +289,315 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     ref.watch(textScaleFactorProvider);
     debugPrint(
         "BUILT: highlights = $highlights\t selectionOffset: (${_selection?.baseOffset},${_selection?.extentOffset}), pos: (${_selection?.start},${_selection?.end})");
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: AnimateGradient(
-        primaryBegin: Alignment.bottomRight,
-        primaryEnd: Alignment.topRight,
-        secondaryBegin: Alignment.topRight,
-        secondaryEnd: Alignment.bottomLeft,
-        primaryColors: const [
-          Color(0xffff7f50),
-          Color.fromARGB(255, 194, 129, 255),
-        ],
-        secondaryColors: const [
-          Color(0xff00ffff),
-          Color.fromARGB(255, 54, 190, 165),
-        ],
-        duration: const Duration(seconds: 10),
-        child: Stack(
-          children: [
-            ScrollListener(
-              child: CustomScrollView(
-                slivers: [
-                  SliverAppBar(
-                    leading: const Icon(Icons.arrow_back),
-                    floating: true,
-                    snap: true,
-                    flexibleSpace: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xffAEC6F6),
-                            Color.fromARGB(255, 115, 161, 254)
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Align(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppbarIconButton(
-                              tooltip: "Bigger Text",
-                              icon: const Icon(Icons.add),
-                              onPressed: () => ref
-                                  .read(textScaleFactorProvider.notifier)
-                                  .increaseSizeFactor(),
-                            ),
-                            AppbarIconButton(
-                              tooltip: "Smaller Text",
-                              icon: const Icon(CupertinoIcons.minus),
-                              onPressed: () => ref
-                                  .read(textScaleFactorProvider.notifier)
-                                  .decreaseSizeFactor(),
-                            ),
-                            AppbarIconButton(
-                              tooltip: "Highlight Selection",
-                              icon: Icon(
-                                CupertinoIcons.pencil,
-                                color: highlightColor,
-                              ),
-                              onPressed:
-                                  (_selection != null && _selectedUuid != null)
-                                      ? () {
-                                          ref
-                                              .read(highlightNotifierProvider
-                                                  .notifier)
-                                              .addHighlight(
-                                                _selectedUuid!,
-                                                TextRange(
-                                                    start: _selection!.start,
-                                                    end: _selection!.end),
-                                              );
-                                          _selection = null;
-                                        }
-                                      : null,
-                            ),
-                            PopupMenuButton(
-                              position: PopupMenuPosition.under,
-                              constraints: const BoxConstraints(
-                                  minWidth: double.minPositive,
-                                  maxWidth: 5 * 56.0),
-                              child: const AppbarIconButton(
-                                tooltip: "Highlight color",
-                                icon: Icon(
-                                  Icons.arrow_drop_down_circle_outlined,
-                                ),
-                                onPressed: null,
-                              ),
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  onTap: () => ref
-                                      .read(highLightColorProvider.notifier)
-                                      .updateColor(Colors.yellow),
-                                  child: const ColorSelectionDropdownItem(
-                                      Colors.yellow),
-                                ),
-                                PopupMenuItem(
-                                  onTap: () => ref
-                                      .read(highLightColorProvider.notifier)
-                                      .updateColor(Colors.red),
-                                  child: const ColorSelectionDropdownItem(
-                                      Colors.red),
-                                ),
-                                PopupMenuItem(
-                                  onTap: () => ref
-                                      .read(highLightColorProvider.notifier)
-                                      .updateColor(Colors.green),
-                                  child: const ColorSelectionDropdownItem(
-                                      Colors.green),
-                                ),
-                                PopupMenuItem(
-                                  onTap: () => ref
-                                      .read(highLightColorProvider.notifier)
-                                      .updateColor(Colors.blue),
-                                  child: const ColorSelectionDropdownItem(
-                                      Colors.blue),
-                                ),
-                              ],
-                            ),
-                            AppbarIconButton(
-                              tooltip: "Erase Highlight",
-                              icon: Icon(
-                                Icons.stay_current_landscape_rounded,
-                                color:
-                                    eraserActive ? Colors.blue : Colors.black,
-                              ),
-                              onPressed: () {
-                                _toggleEraser();
-                                debugPrint("Cursor changed: $eraserActive");
-                              },
-                            ),
-                            AppbarIconButton(
-                              tooltip: "Add Note",
-                              icon: Icon(
-                                Icons.note_add,
-                                color:
-                                    addNoteActive ? Colors.blue : Colors.black,
-                              ),
-                              onPressed: () {
-                                _toggleAddNote();
-                              },
-                            ),
-                          ],
-                        ),
+      body: Stack(
+        children: [
+          const MyAnimatedBackground(),
+          ScrollListener(
+            article: article,
+            child: CustomScrollView(
+              controller: customScrollViewController,
+              slivers: [
+                SliverAppBar(
+                  leading: const Icon(Icons.arrow_back),
+                  floating: true,
+                  snap: true,
+                  flexibleSpace: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xffAEC6F6),
+                          Color.fromARGB(255, 115, 161, 254)
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                    child: Align(
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Expanded(
-                            flex: 1,
-                            child: GlassContainer(
-                              margin: const EdgeInsets.only(right: 5, left: 15),
-                              padding: const EdgeInsets.all(9),
-                              topBorderRadius: 12,
-                              allowBottomRadius: true,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  SplitScreenTitle(
-                                    text: "About",
-                                    iconData: Icons.info_outline,
-                                    trailing: IconButton.outlined(
-                                        style: OutlinedButton.styleFrom(
-                                            side: const BorderSide(
-                                                color: Colors.grey)),
-                                        color: Colors.blue,
-                                        visualDensity: VisualDensity.compact,
-                                        onPressed: () {},
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          size: 20,
-                                        )),
-                                  ),
-                                  const SizedBox(height: 7),
-                                  Container(
-                                      clipBehavior: Clip.antiAlias,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xfff4f4f4),
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(
-                                          color: Colors.grey[350]!,
-                                        ),
-                                      ),
-                                      child: aboutArticleColumn(
-                                          article,
-                                          ref.read(
-                                              selectedTagListForFilteringProvider)))
-                                ],
-                              ),
-                            ),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppbarIconButton(
+                            tooltip: "Bigger Text",
+                            icon: const Icon(Icons.add),
+                            onPressed: () => ref
+                                .read(textScaleFactorProvider.notifier)
+                                .increaseSizeFactor(),
                           ),
-                          Expanded(
-                              flex: 3,
-                              child: GlassContainer(
-                                padding: const EdgeInsets.all(9),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 15),
-                                topBorderRadius: 12,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    const SplitScreenTitle(
-                                        text: "Article",
-                                        iconData: Icons.article_outlined),
-                                    const SizedBox(height: 7),
-                                    Container(
-                                      clipBehavior: Clip.antiAlias,
-                                      constraints: BoxConstraints(
-                                        minHeight: screenHeight * 0.8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xfff4f4f4),
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(
-                                          color: Colors.grey[350]!,
-                                        ),
-                                      ),
-                                      child: DefaultTabController(
-                                        length: 3,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: [
-                                            const TabBar(
-                                              isScrollable: true,
-                                              tabAlignment: TabAlignment.start,
-                                              indicatorColor: Colors.blue,
-                                              tabs: [
-                                                Tab(text: "Article"),
-                                                Tab(text: "Highlights"),
-                                                Tab(text: "Summary"),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 20),
-                                            MeasureSize(
-                                              onChange: (size) =>
-                                                  updateMainContainerSize(size),
-                                              child: Stack(children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: HtmlWidget(
-                                                    widget.htmlContent,
-                                                    customWidgetBuilder:
-                                                        (element) {
-                                                      final position = element
-                                                              .parent?.children
-                                                              .indexOf(
-                                                                  element) ??
-                                                          0;
-                                                      final content =
-                                                          element.outerHtml;
-                                                      element.attributes[
-                                                              'data-uuid'] =
-                                                          generateUuidFromContent(
-                                                              content,
-                                                              position);
-                                                      return null;
-                                                    },
-                                                    factoryBuilder: () =>
-                                                        CustomWidgetFactory(
-                                                      _onSelectionChanged,
-                                                      ref,
-                                                      _selectedUuid,
-                                                      widget.article,
-                                                    ),
-                                                    onTapUrl: (url) {
-                                                      debugPrint('tapped $url');
-                                                      return false;
-                                                    },
-                                                    textStyle: TextStyle(
-                                                        fontSize:
-                                                            14 * scaleFactor),
-                                                    rebuildTriggers: [
-                                                      highlights,
-                                                      scaleFactor
-                                                    ],
-                                                  ),
-                                                ),
-                                                // ..._buildNotesOverlay(constraints),
-                                                ..._buildNotesOverlay(
-                                                    mainContainerSize),
-                                                if (addNoteActive)
-                                                  Positioned.fill(
-                                                      child: MouseRegion(
-                                                    cursor:
-                                                        SystemMouseCursors.copy,
-                                                    child: GestureDetector(
-                                                      behavior: HitTestBehavior
-                                                          .translucent,
-                                                      onTapUp: (details) {
-                                                        _addNoteAtPosition(
-                                                            details
-                                                                .localPosition,
-                                                            mainContainerSize);
-                                                      },
-                                                      child: Container(
-                                                        color: Colors.black12,
-                                                      ),
-                                                    ),
-                                                  )),
-                                              ]),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )),
+                          AppbarIconButton(
+                            tooltip: "Smaller Text",
+                            icon: const Icon(CupertinoIcons.minus),
+                            onPressed: () => ref
+                                .read(textScaleFactorProvider.notifier)
+                                .decreaseSizeFactor(),
+                          ),
+                          AppbarIconButton(
+                            tooltip: "Highlight Selection",
+                            icon: Icon(
+                              CupertinoIcons.pencil,
+                              color: highlightColor,
+                            ),
+                            onPressed: (_selection != null &&
+                                    _selectedUuid != null)
+                                ? () {
+                                    ref
+                                        .read(
+                                            highlightNotifierProvider.notifier)
+                                        .addHighlight(
+                                          _selectedUuid!,
+                                          TextRange(
+                                              start: _selection!.start,
+                                              end: _selection!.end),
+                                        );
+                                    _selection = null;
+                                  }
+                                : null,
+                          ),
+                          PopupMenuButton(
+                            position: PopupMenuPosition.under,
+                            constraints: const BoxConstraints(
+                                minWidth: double.minPositive,
+                                maxWidth: 5 * 56.0),
+                            child: const AppbarIconButton(
+                              tooltip: "Highlight color",
+                              icon: Icon(
+                                Icons.arrow_drop_down_circle_outlined,
+                              ),
+                              onPressed: null,
+                            ),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                onTap: () => ref
+                                    .read(highLightColorProvider.notifier)
+                                    .updateColor(Colors.yellow),
+                                child: const ColorSelectionDropdownItem(
+                                    Colors.yellow),
+                              ),
+                              PopupMenuItem(
+                                onTap: () => ref
+                                    .read(highLightColorProvider.notifier)
+                                    .updateColor(Colors.red),
+                                child: const ColorSelectionDropdownItem(
+                                    Colors.red),
+                              ),
+                              PopupMenuItem(
+                                onTap: () => ref
+                                    .read(highLightColorProvider.notifier)
+                                    .updateColor(Colors.green),
+                                child: const ColorSelectionDropdownItem(
+                                    Colors.green),
+                              ),
+                              PopupMenuItem(
+                                onTap: () => ref
+                                    .read(highLightColorProvider.notifier)
+                                    .updateColor(Colors.blue),
+                                child: const ColorSelectionDropdownItem(
+                                    Colors.blue),
+                              ),
+                            ],
+                          ),
+                          AppbarIconButton(
+                            tooltip: "Erase Highlight",
+                            icon: Icon(
+                              Icons.stay_current_landscape_rounded,
+                              color: eraserActive ? Colors.blue : Colors.black,
+                            ),
+                            onPressed: () {
+                              _toggleEraser();
+                              debugPrint("Cursor changed: $eraserActive");
+                            },
+                          ),
+                          AppbarIconButton(
+                            tooltip: "Add Note",
+                            icon: Icon(
+                              Icons.note_add,
+                              color: addNoteActive ? Colors.blue : Colors.black,
+                            ),
+                            onPressed: () {
+                              _toggleAddNote();
+                            },
+                          ),
                         ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: GlassContainer(
+                            margin: const EdgeInsets.only(right: 5, left: 15),
+                            padding: const EdgeInsets.all(9),
+                            topBorderRadius: 12,
+                            allowBottomRadius: true,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SplitScreenTitle(
+                                  text: "About",
+                                  iconData: Icons.info_outline,
+                                  trailing: IconButton.outlined(
+                                      style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(
+                                              color: Colors.grey)),
+                                      color: Colors.blue,
+                                      visualDensity: VisualDensity.compact,
+                                      onPressed: () {},
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        size: 20,
+                                      )),
+                                ),
+                                const SizedBox(height: 7),
+                                Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xfff4f4f4),
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                        color: Colors.grey[350]!,
+                                      ),
+                                    ),
+                                    child: aboutArticleColumn(
+                                        article,
+                                        ref.read(
+                                            selectedTagListForFilteringProvider)))
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                            flex: 3,
+                            child: GlassContainer(
+                              padding: const EdgeInsets.all(9),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 15),
+                              topBorderRadius: 12,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const SplitScreenTitle(
+                                      text: "Article",
+                                      iconData: Icons.article_outlined),
+                                  const SizedBox(height: 7),
+                                  Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    constraints: BoxConstraints(
+                                      minHeight: screenHeight * 0.8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xfff4f4f4),
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                        color: Colors.grey[350]!,
+                                      ),
+                                    ),
+                                    child: DefaultTabController(
+                                      length: 3,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          const TabBar(
+                                            isScrollable: true,
+                                            tabAlignment: TabAlignment.start,
+                                            indicatorColor: Colors.blue,
+                                            tabs: [
+                                              Tab(text: "Article"),
+                                              Tab(text: "Highlights"),
+                                              Tab(text: "Summary"),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          MeasureSize(
+                                            onChange: (size) =>
+                                                updateMainContainerSize(size),
+                                            child: Stack(children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: HtmlWidget(
+                                                  widget.htmlContent,
+                                                  customWidgetBuilder:
+                                                      (element) {
+                                                    final position = element
+                                                            .parent?.children
+                                                            .indexOf(element) ??
+                                                        0;
+                                                    final content =
+                                                        element.outerHtml;
+                                                    element.attributes[
+                                                            'data-uuid'] =
+                                                        generateUuidFromContent(
+                                                            content, position);
+                                                    return null;
+                                                  },
+                                                  factoryBuilder: () =>
+                                                      CustomWidgetFactory(
+                                                    _onSelectionChanged,
+                                                    ref,
+                                                    _selectedUuid,
+                                                    widget.article,
+                                                  ),
+                                                  onTapUrl: (url) {
+                                                    debugPrint('tapped $url');
+                                                    return false;
+                                                  },
+                                                  textStyle: TextStyle(
+                                                      fontSize:
+                                                          14 * scaleFactor),
+                                                  rebuildTriggers: [
+                                                    highlights,
+                                                    scaleFactor
+                                                  ],
+                                                ),
+                                              ),
+                                              // ..._buildNotesOverlay(constraints),
+                                              ..._buildNotesOverlay(
+                                                  mainContainerSize),
+                                              if (addNoteActive)
+                                                Positioned.fill(
+                                                    child: MouseRegion(
+                                                  cursor:
+                                                      SystemMouseCursors.copy,
+                                                  child: GestureDetector(
+                                                    behavior: HitTestBehavior
+                                                        .translucent,
+                                                    onTapUp: (details) {
+                                                      _addNoteAtPosition(
+                                                          details.localPosition,
+                                                          mainContainerSize);
+                                                    },
+                                                    child: Container(
+                                                      color: Colors.black12,
+                                                    ),
+                                                  ),
+                                                )),
+                                            ]),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const ProgressBar(),
-          ],
-        ),
+          ),
+          ProgressBar(article: article),
+        ],
       ),
     );
   }
@@ -897,6 +851,52 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       //   ),
       // );
     }
+  }
+
+  //to remove inline tags from html content
+  String removeInlineTags(String htmlContent) {
+    // Parse the HTML content
+    final document = html_parser.parse(htmlContent);
+
+    // Function to recursively process each node
+    String processNode(dom.Node node) {
+      // If it's an element and not a text node
+      if (node.nodeType == dom.Node.ELEMENT_NODE) {
+        final element = node as dom.Element;
+
+        // If the element is a block-level element, keep it but process its children
+        if ([
+          'p',
+          'div',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'article',
+          'section'
+        ].contains(element.localName)) {
+          // Recursively process child nodes and reconstruct the element without inline children
+          final childContent =
+              element.nodes.map((child) => processNode(child)).join('');
+          return '<${element.localName}>$childContent</${element.localName}>';
+        } else {
+          // If it's an inline element, return its text content only
+          return element.text;
+        }
+      } else if (node.nodeType == dom.Node.TEXT_NODE) {
+        // If it's a text node, return its text
+        return node.text!;
+      }
+      return '';
+    }
+
+    // Process each node in the body and reconstruct the HTML
+    final processedContent =
+        document.body!.nodes.map((node) => processNode(node)).join('');
+
+    return processedContent;
   }
 }
 

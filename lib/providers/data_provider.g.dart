@@ -510,21 +510,146 @@ class _NotesNotifierProviderElement
   String get articleId => (origin as NotesNotifierProvider).articleId;
 }
 
-String _$scrollProgressHash() => r'9497198a4cbdaee000ec44bc344b81833be0275e';
+String _$scrollPositionHash() => r'8551ba95e0eec31e90bb34b8c5b0b65942b04c53';
 
-/// See also [ScrollProgress].
-@ProviderFor(ScrollProgress)
-final scrollProgressProvider =
-    NotifierProvider<ScrollProgress, double>.internal(
-  ScrollProgress.new,
-  name: r'scrollProgressProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$scrollProgressHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+abstract class _$ScrollPosition extends BuildlessNotifier<ScrollData> {
+  late final String articleId;
 
-typedef _$ScrollProgress = Notifier<double>;
+  ScrollData build(
+    String articleId,
+  );
+}
+
+/// See also [ScrollPosition].
+@ProviderFor(ScrollPosition)
+const scrollPositionProvider = ScrollPositionFamily();
+
+/// See also [ScrollPosition].
+class ScrollPositionFamily extends Family<ScrollData> {
+  /// See also [ScrollPosition].
+  const ScrollPositionFamily();
+
+  /// See also [ScrollPosition].
+  ScrollPositionProvider call(
+    String articleId,
+  ) {
+    return ScrollPositionProvider(
+      articleId,
+    );
+  }
+
+  @override
+  ScrollPositionProvider getProviderOverride(
+    covariant ScrollPositionProvider provider,
+  ) {
+    return call(
+      provider.articleId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'scrollPositionProvider';
+}
+
+/// See also [ScrollPosition].
+class ScrollPositionProvider
+    extends NotifierProviderImpl<ScrollPosition, ScrollData> {
+  /// See also [ScrollPosition].
+  ScrollPositionProvider(
+    String articleId,
+  ) : this._internal(
+          () => ScrollPosition()..articleId = articleId,
+          from: scrollPositionProvider,
+          name: r'scrollPositionProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$scrollPositionHash,
+          dependencies: ScrollPositionFamily._dependencies,
+          allTransitiveDependencies:
+              ScrollPositionFamily._allTransitiveDependencies,
+          articleId: articleId,
+        );
+
+  ScrollPositionProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.articleId,
+  }) : super.internal();
+
+  final String articleId;
+
+  @override
+  ScrollData runNotifierBuild(
+    covariant ScrollPosition notifier,
+  ) {
+    return notifier.build(
+      articleId,
+    );
+  }
+
+  @override
+  Override overrideWith(ScrollPosition Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ScrollPositionProvider._internal(
+        () => create()..articleId = articleId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        articleId: articleId,
+      ),
+    );
+  }
+
+  @override
+  NotifierProviderElement<ScrollPosition, ScrollData> createElement() {
+    return _ScrollPositionProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ScrollPositionProvider && other.articleId == articleId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, articleId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ScrollPositionRef on NotifierProviderRef<ScrollData> {
+  /// The parameter `articleId` of this provider.
+  String get articleId;
+}
+
+class _ScrollPositionProviderElement
+    extends NotifierProviderElement<ScrollPosition, ScrollData>
+    with ScrollPositionRef {
+  _ScrollPositionProviderElement(super.provider);
+
+  @override
+  String get articleId => (origin as ScrollPositionProvider).articleId;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

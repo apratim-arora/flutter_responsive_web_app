@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:animate_gradient/animate_gradient.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -2137,26 +2138,17 @@ class _AddNoteDialogState extends ConsumerState<AddNoteDialog> {
 //////progress bar
 class ScrollListener extends ConsumerStatefulWidget {
   final Widget child;
+  final Article article;
 
-  const ScrollListener({required this.child, super.key});
+  const ScrollListener({required this.article, required this.child, super.key});
 
   @override
-  _ScrollListenerState createState() => _ScrollListenerState();
+  ScrollListenerState createState() => ScrollListenerState();
 }
 
-class _ScrollListenerState extends ConsumerState<ScrollListener> {
+class ScrollListenerState extends ConsumerState<ScrollListener> {
   final ScrollController _scrollController = ScrollController();
   double _totalContentHeight = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      ref
-          .read(scrollProgressProvider.notifier)
-          .setScrollProgress(_scrollController.position.pixels);
-    });
-  }
 
   @override
   void dispose() {
@@ -2170,9 +2162,14 @@ class _ScrollListenerState extends ConsumerState<ScrollListener> {
       onNotification: (scrollNotification) {
         if (scrollNotification is ScrollUpdateNotification) {
           _totalContentHeight = scrollNotification.metrics.maxScrollExtent;
-          ref.read(scrollProgressProvider.notifier).setScrollProgress(
-              (scrollNotification.metrics.pixels / _totalContentHeight)
-                  .clamp(0.0, 1.0));
+          print(
+              "SCROLLED: CURRENT:(${scrollNotification.metrics.pixels}), MAX:($_totalContentHeight)");
+          ref
+              .read(scrollPositionProvider(widget.article.id).notifier)
+              .setScrollPosition(ScrollData(scrollNotification.metrics.pixels,
+                  scrollNotification.metrics.maxScrollExtent));
+          print(
+              "SCROLL_PROGRESS: ${ref.read(scrollPositionProvider(widget.article.id))}");
         }
         return false;
       },
@@ -2182,11 +2179,12 @@ class _ScrollListenerState extends ConsumerState<ScrollListener> {
 }
 
 class ProgressBar extends ConsumerWidget {
-  const ProgressBar({super.key});
+  const ProgressBar({required this.article, super.key});
+  final Article article;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scrollProgress = ref.watch(scrollProgressProvider);
+    ref.watch(scrollPositionProvider(article.id));
 
     return Positioned(
       top: 0,
@@ -2195,11 +2193,48 @@ class ProgressBar extends ConsumerWidget {
       child: Align(
         alignment: Alignment.topLeft,
         child: Container(
-          height: 6, // Adjust height to make it minimal
-          color: Colors.blue, // Customize the color as needed
-          width: MediaQuery.of(context).size.width * scrollProgress,
+          height: 6,
+          decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [
+            Color(0xffffdd6a),
+            Color(0xffff0b93),
+            Color.fromARGB(255, 164, 51, 156),
+          ])),
+          width: MediaQuery.of(context).size.width *
+              ref
+                  .read(scrollPositionProvider(article.id).notifier)
+                  .getScrollProgress(),
         ),
       ),
+    );
+  }
+}
+
+class MyAnimatedBackground extends StatelessWidget {
+  final Widget? child;
+  const MyAnimatedBackground({this.child, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimateGradient(
+      primaryBegin: Alignment.bottomRight,
+      primaryEnd: Alignment.topRight,
+      secondaryBegin: Alignment.topRight,
+      secondaryEnd: Alignment.bottomLeft,
+      primaryColors: const [
+        Color(0xffff7f50),
+        Color.fromARGB(255, 194, 129, 255),
+      ],
+      secondaryColors: const [
+        Color(0xff00ffff),
+        Color.fromARGB(255, 54, 190, 165),
+      ],
+      duration: const Duration(seconds: 10),
+      child: child ??
+          const SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+          ),
     );
   }
 }

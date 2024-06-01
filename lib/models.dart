@@ -1,6 +1,29 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+
+class ScrollData {
+  final double current;
+  final double? total;
+
+  ScrollData(this.current, [this.total]);
+
+  ScrollData copyWith({
+    double? current,
+    double? total,
+  }) {
+    return ScrollData(
+      current ?? this.current,
+      total ?? this.total,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ScrollData(current: $current, max: $total)';
+  }
+}
 
 class Note {
   final String id;
@@ -26,7 +49,7 @@ class Note {
   }) {
     return Note(
       id: id ?? this.id,
-      iconImageIndex: iconImage ?? this.iconImageIndex,
+      iconImageIndex: iconImage ?? iconImageIndex,
       text: text ?? this.text,
       xPercent: xPercent ?? this.xPercent,
       yPercent: yPercent ?? this.yPercent,
