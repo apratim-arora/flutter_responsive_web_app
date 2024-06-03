@@ -249,6 +249,115 @@ class AppbarIconButton extends StatelessWidget {
   }
 }
 
+class ReaderAppbarIcon extends ConsumerWidget {
+  const ReaderAppbarIcon({
+    super.key,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    this.makeDivider = true,
+    this.dropdownItemList,
+    this.highlightColor = Colors.blue,
+    this.tooltip,
+  });
+  final Widget icon;
+  final bool isSelected;
+  final void Function() onTap;
+  final bool makeDivider;
+  final Color highlightColor;
+  final List<PopupMenuEntry<dynamic>>? dropdownItemList;
+  final String? tooltip;
+
+  BoxDecoration? borderProvider({bool forDropdown = false}) {
+    if (!forDropdown) {
+      return BoxDecoration(
+          color: isSelected ? Colors.white10 : Colors.transparent,
+          borderRadius: dropdownItemList != null
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(5), bottomLeft: Radius.circular(5))
+              : BorderRadius.circular(5),
+          border: isSelected
+              ? Border(bottom: BorderSide(width: 1.5, color: highlightColor))
+              : null //borderProvider(),
+          );
+    }
+    return BoxDecoration(
+        color: isSelected ? Colors.white10 : Colors.transparent,
+        borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
+        border: isSelected
+            ? Border(bottom: BorderSide(width: 1.5, color: highlightColor))
+            : null);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 0),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Tooltip(
+              message: tooltip ?? "",
+              waitDuration: const Duration(milliseconds: 250),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: dropdownItemList != null
+                    ? const BorderRadius.only(
+                        topLeft: Radius.circular(5),
+                        bottomLeft: Radius.circular(5))
+                    : BorderRadius.circular(5),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 3.0, horizontal: 7),
+                  height: 36,
+                  decoration: borderProvider(),
+                  child: icon,
+                ),
+              ),
+            ),
+            if (dropdownItemList != null)
+              PopupMenuButton(
+                tooltip: "Show Options",
+                position: PopupMenuPosition.under,
+                constraints: const BoxConstraints(
+                    minWidth: double.minPositive, maxWidth: 5 * 56.0),
+                itemBuilder: (context) => dropdownItemList!,
+                child: InkWell(
+                  onTap: null,
+                  borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(5),
+                      bottomRight: Radius.circular(5)),
+                  child: Container(
+                    height: 36,
+                    decoration: borderProvider(forDropdown: true),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 2),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white70,
+                        size: 21,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (makeDivider)
+              const VerticalDivider(
+                width: 8.6,
+                indent: 15,
+                endIndent: 15,
+                color: Colors.white70,
+              )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class MobileSplitContainer extends StatelessWidget {
   const MobileSplitContainer(
       {super.key,

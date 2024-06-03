@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -79,12 +78,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   late bool isMobile;
   bool addNoteActive = false;
   Size mainContainerSize = const Size(0, 0);
-  ScrollController customScrollViewController = ScrollController(
-      // onAttach: (position) {
-      //   print(
-      //       "Attached, position: $position, extent: ${position.maxScrollExtent}");
-      // },
-      );
+  ScrollController customScrollViewController = ScrollController();
 
   void updateMainContainerSize(Size size) {
     debugPrint("Updating mainContainerSize");
@@ -292,6 +286,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     super.dispose();
   }
 
+  bool isSelected2 = false;
   @override
   Widget build(BuildContext context) {
     isMobile = MediaQuery.of(context).size.width < 600;
@@ -334,55 +329,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppbarIconButton(
-                            tooltip: "Bigger Text",
-                            icon: const Icon(Icons.add),
-                            onPressed: () => ref
-                                .read(textScaleFactorProvider.notifier)
-                                .increaseSizeFactor(),
-                          ),
-                          AppbarIconButton(
-                            tooltip: "Smaller Text",
-                            icon: const Icon(CupertinoIcons.minus),
-                            onPressed: () => ref
-                                .read(textScaleFactorProvider.notifier)
-                                .decreaseSizeFactor(),
-                          ),
-                          AppbarIconButton(
-                            tooltip: "Highlight Selection",
-                            icon: Icon(
-                              CupertinoIcons.pencil,
-                              color: highlightColor,
-                            ),
-                            onPressed: (_selection != null &&
-                                    _selectedUuid != null)
-                                ? () {
-                                    ref
-                                        .read(
-                                            highlightNotifierProvider.notifier)
-                                        .addHighlight(
-                                          _selectedUuid!,
-                                          TextRange(
-                                              start: _selection!.start,
-                                              end: _selection!.end),
-                                        );
-                                    _selection = null;
-                                  }
-                                : null,
-                          ),
-                          PopupMenuButton(
-                            position: PopupMenuPosition.under,
-                            constraints: const BoxConstraints(
-                                minWidth: double.minPositive,
-                                maxWidth: 5 * 56.0),
-                            child: const AppbarIconButton(
-                              tooltip: "Highlight color",
-                              icon: Icon(
-                                Icons.arrow_drop_down_circle_outlined,
+                          ReaderAppbarIcon(
+                            icon: Padding(
+                              padding: const EdgeInsets.all(2.5),
+                              child: Image.asset(
+                                "assets/images/icons/marker.png",
+                                fit: BoxFit.scaleDown,
+                                color: Colors.white,
+                                width: 19.5,
+                                height: 19.5,
                               ),
-                              onPressed: null,
                             ),
-                            itemBuilder: (context) => [
+                            tooltip: "Highlight Selection",
+                            dropdownItemList: [
                               PopupMenuItem(
                                 onTap: () => ref
                                     .read(highLightColorProvider.notifier)
@@ -412,28 +371,186 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                     Colors.blue),
                               ),
                             ],
+                            onTap: () {
+                              if (_selection != null && _selectedUuid != null) {
+                                ref
+                                    .read(highlightNotifierProvider.notifier)
+                                    .addHighlight(
+                                      _selectedUuid!,
+                                      TextRange(
+                                          start: _selection!.start,
+                                          end: _selection!.end),
+                                    );
+                                _selection = null;
+                              }
+                            },
+                            highlightColor: highlightColor,
+                            isSelected: true,
                           ),
-                          AppbarIconButton(
-                            tooltip: "Erase Highlight",
-                            icon: Icon(
-                              Icons.stay_current_landscape_rounded,
-                              color: eraserActive ? Colors.blue : Colors.black,
+                          ReaderAppbarIcon(
+                            icon: Padding(
+                              padding: const EdgeInsets.all(2.5),
+                              child: Image.asset(
+                                "assets/images/icons/eraser.png",
+                                fit: BoxFit.scaleDown,
+                                color: Colors.white,
+                                width: 18,
+                                height: 18,
+                              ),
                             ),
-                            onPressed: () {
+                            tooltip: "Erase Highlight",
+                            isSelected: eraserActive,
+                            onTap: () {
                               _toggleEraser();
                               debugPrint("Cursor changed: $eraserActive");
                             },
                           ),
-                          AppbarIconButton(
-                            tooltip: "Add Note",
-                            icon: Icon(
-                              Icons.note_add,
-                              color: addNoteActive ? Colors.blue : Colors.black,
+                          // const SizedBox(width: 15),
+                          ReaderAppbarIcon(
+                            icon: Image.asset(
+                              "assets/images/icons/text_increase.png",
+                              fit: BoxFit.scaleDown,
+                              color: Colors.white,
+                              width: 24,
+                              height: 24,
                             ),
-                            onPressed: () {
-                              _toggleAddNote();
-                            },
+                            tooltip: "Increase Text Size",
+                            isSelected: false,
+                            onTap: () => ref
+                                .read(textScaleFactorProvider.notifier)
+                                .increaseSizeFactor(),
                           ),
+                          ReaderAppbarIcon(
+                              icon: Image.asset(
+                                "assets/images/icons/text_decrease.png",
+                                fit: BoxFit.scaleDown,
+                                color: Colors.white,
+                                width: 24,
+                                height: 24,
+                              ),
+                              tooltip: "Decrease Text Size",
+                              // makeDivider: false,
+                              isSelected: false,
+                              onTap: () => ref
+                                  .read(textScaleFactorProvider.notifier)
+                                  .decreaseSizeFactor()),
+                          // const SizedBox(width: 15),
+                          ReaderAppbarIcon(
+                            icon: Padding(
+                              padding: const EdgeInsets.all(2.5),
+                              child: Image.asset(
+                                "assets/images/icons/add_note.png",
+                                fit: BoxFit.scaleDown,
+                                color: Colors.white,
+                                width: 18,
+                                height: 18,
+                              ),
+                            ),
+                            tooltip: "Add a Note",
+                            isSelected: addNoteActive,
+                            onTap: () => _toggleAddNote(),
+                            makeDivider: false,
+                          ),
+                          // AppbarIconButton(
+                          //   tooltip: "Bigger Text",
+                          //   icon: const Icon(Icons.add),
+                          //   onPressed: () => ref
+                          //       .read(textScaleFactorProvider.notifier)
+                          //       .increaseSizeFactor(),
+                          // ),
+                          // AppbarIconButton(
+                          //   tooltip: "Smaller Text",
+                          //   icon: const Icon(CupertinoIcons.minus),
+                          //   onPressed: () => ref
+                          //       .read(textScaleFactorProvider.notifier)
+                          //       .decreaseSizeFactor(),
+                          // ),
+                          // AppbarIconButton(
+                          //   tooltip: "Highlight Selection",
+                          //   icon: Icon(
+                          //     CupertinoIcons.pencil,
+                          //     color: highlightColor,
+                          //   ),
+                          //   onPressed: (_selection != null &&
+                          //           _selectedUuid != null)
+                          //       ? () {
+                          //           ref
+                          //               .read(
+                          //                   highlightNotifierProvider.notifier)
+                          //               .addHighlight(
+                          //                 _selectedUuid!,
+                          //                 TextRange(
+                          //                     start: _selection!.start,
+                          //                     end: _selection!.end),
+                          //               );
+                          //           _selection = null;
+                          //         }
+                          //       : null,
+                          // ),
+                          // PopupMenuButton(
+                          //   position: PopupMenuPosition.under,
+                          //   constraints: const BoxConstraints(
+                          //       minWidth: double.minPositive,
+                          //       maxWidth: 5 * 56.0),
+                          //   child: const AppbarIconButton(
+                          //     tooltip: "Highlight color",
+                          //     icon: Icon(
+                          //       Icons.arrow_drop_down_circle_outlined,
+                          //     ),
+                          //     onPressed: null,
+                          //   ),
+                          //   itemBuilder: (context) => [
+                          //     PopupMenuItem(
+                          //       onTap: () => ref
+                          //           .read(highLightColorProvider.notifier)
+                          //           .updateColor(Colors.yellow),
+                          //       child: const ColorSelectionDropdownItem(
+                          //           Colors.yellow),
+                          //     ),
+                          //     PopupMenuItem(
+                          //       onTap: () => ref
+                          //           .read(highLightColorProvider.notifier)
+                          //           .updateColor(Colors.red),
+                          //       child: const ColorSelectionDropdownItem(
+                          //           Colors.red),
+                          //     ),
+                          //     PopupMenuItem(
+                          //       onTap: () => ref
+                          //           .read(highLightColorProvider.notifier)
+                          //           .updateColor(Colors.green),
+                          //       child: const ColorSelectionDropdownItem(
+                          //           Colors.green),
+                          //     ),
+                          //     PopupMenuItem(
+                          //       onTap: () => ref
+                          //           .read(highLightColorProvider.notifier)
+                          //           .updateColor(Colors.blue),
+                          //       child: const ColorSelectionDropdownItem(
+                          //           Colors.blue),
+                          //     ),
+                          //   ],
+                          // ),
+                          // AppbarIconButton(
+                          //   tooltip: "Erase Highlight",
+                          //   icon: Icon(
+                          //     Icons.stay_current_landscape_rounded,
+                          //     color: eraserActive ? Colors.blue : Colors.black,
+                          //   ),
+                          //   onPressed: () {
+                          //     _toggleEraser();
+                          //     debugPrint("Cursor changed: $eraserActive");
+                          //   },
+                          // ),
+                          // AppbarIconButton(
+                          //   tooltip: "Add Note",
+                          //   icon: Icon(
+                          //     Icons.note_add,
+                          //     color: addNoteActive ? Colors.blue : Colors.black,
+                          //   ),
+                          //   onPressed: () {
+                          //     _toggleAddNote();
+                          //   },
+                          // ),
                         ],
                       ),
                     ),
