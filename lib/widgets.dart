@@ -5,6 +5,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ import 'package:responsive_1/providers/data_provider.dart';
 import 'package:responsive_1/reader_widget.dart';
 import 'package:universal_html/html.dart' as my_html;
 import 'package:url_launcher/url_launcher.dart';
+// import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 //functions
 Alignment stockImageAndTextAlignment(double width, double height, bool isImage,
@@ -2345,3 +2347,741 @@ class MyAnimatedBackground extends StatelessWidget {
     );
   }
 }
+
+class AboutArticleContainer extends StatefulWidget {
+  const AboutArticleContainer(this.article, {super.key});
+  final Article article;
+
+  @override
+  State<AboutArticleContainer> createState() => _AboutArticleContainerState();
+}
+
+class _AboutArticleContainerState extends State<AboutArticleContainer> {
+  late AutoSizeGroup breadcrumbGroupAutoSize;
+  late List<Widget> tagList;
+
+  @override
+  void initState() {
+    breadcrumbGroupAutoSize = AutoSizeGroup();
+    tagList = widget.article.tags
+        .map((tagName) => Chip(
+              backgroundColor: Colors
+                  .primaries[Random().nextInt(Colors.primaries.length)]
+                  .withAlpha(35),
+              side: BorderSide(width: 0.2, color: Colors.grey.shade200),
+              label: AutoSizeText(
+                tagName,
+                minFontSize: 5,
+                maxFontSize: 11,
+                style: const TextStyle(color: Colors.black87),
+              ),
+              clipBehavior: Clip.antiAlias,
+              labelStyle: const TextStyle(),
+            ))
+        .toList();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return aboutArticleColumn(widget.article, context);
+  }
+
+  Column aboutArticleColumn(Article article, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //header left side
+            Flexible(
+              flex: 7,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //top side containing icons and labels
+                  FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(5, 2, 5, 2),
+                        decoration: BoxDecoration(
+                          color: priorityColor[article.priority]?.withAlpha(30),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: priorityColor[article.priority]!,
+                            width: 0.5,
+                          ),
+                        ),
+                        margin: const EdgeInsets.only(top: 7, left: 5),
+                        child: AutoSizeText(
+                          priorityLabel[article.priority]!,
+                          maxFontSize: 10,
+                          minFontSize: 5,
+                          style:
+                              TextStyle(color: priorityColor[article.priority]),
+                        ),
+                      )),
+                  //bottom side containing fav and title
+                  Row(
+                    children: [
+                      //fav icon
+                      Flexible(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(8.0, 11, 8, 8),
+                          child: ClipRRect(
+                            clipBehavior: Clip.antiAlias,
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.asset(
+                              width: 40,
+                              height: 40,
+                              article.favIconLink,
+                              fit: BoxFit.fitHeight,
+                            ),
+                          ),
+                        ),
+                      ),
+                      //title
+                      Flexible(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AutoSizeText(
+                              article.title,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 2,
+                              minFontSize: 12,
+                              maxFontSize: 15,
+                              softWrap: true,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            //header right side
+            Flexible(
+              flex: 4,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FittedBox(
+                      child: IconAndLabel(
+                        icon: const Icon(
+                          CupertinoIcons.calendar,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
+                        label: Text(
+                          DateFormat('dd MMM, yyyy')
+                              .format(article.dateTimeAdded.toLocal()),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                              fontFamily: "DidactGothic"),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setState(() {
+                        article.isFavouite = !article.isFavouite;
+                        //TODO: provider to be used here for updating main data
+                      }),
+                      icon: article.isFavouite
+                          ? const Icon(
+                              CupertinoIcons.star_fill,
+                            )
+                          // )
+                          : const Icon(CupertinoIcons.star),
+                      color: article.isFavouite ? Colors.amber : Colors.grey,
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
+        ExpandedBodyRowItem(
+          title: "URL",
+          content: Row(
+            children: [
+              Expanded(
+                flex: 15,
+                child: InkWell(
+                  onTap: () => _launchUrl(article.url, context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        flex: 100,
+                        child: AutoSizeText(
+                          article.url.length > 40
+                              ? "${article.url.substring(0, 40)}..."
+                              : article.url,
+                          minFontSize: 12,
+                          maxFontSize: 14,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          wrapWords: false,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                            fontFamily: "DidactGothic",
+                          ),
+                        ),
+                      ),
+                      // if (!isMobile)
+                      //   const Flexible(flex: 2, child: SizedBox(width: 3)),
+                      Flexible(
+                          flex: 5,
+                          child: FittedBox(
+                            child: Icon(
+                              CupertinoIcons.arrow_up_right_square,
+                              size: 16,
+                              color: Colors.blue[600],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ExpandedBodyRowItem(
+            title: "Description",
+            content: AutoSizeText(
+              article.description,
+              minFontSize: 7,
+              maxFontSize: 12,
+              maxLines: 7,
+              overflow: TextOverflow.ellipsis,
+            )),
+        ExpandedBodyRowItem(
+          title: "Tags",
+          content: article.tags.isNotEmpty
+              ? Wrap(
+                  clipBehavior: Clip.antiAlias,
+                  spacing: 3,
+                  runSpacing: 3,
+                  children: tagList)
+              : null,
+        ),
+        ExpandedBodyRowItem(
+          title: "Folder path",
+          content: (article.folderPath?.isNotEmpty == true)
+              ? BreadCrumb(
+                  items: article.folderPath!
+                      .map((folder) => BreadCrumbItem(
+                              content: AutoSizeText(
+                            folder,
+                            group: breadcrumbGroupAutoSize,
+                            softWrap: true,
+                            minFontSize: 7,
+                            maxFontSize: 12,
+                          )))
+                      .toList(),
+                  divider: const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 21,
+                  ),
+                )
+              : null,
+        ),
+        ExpandedBodyRowItem(
+            title: "Progress",
+            content: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  flex: 3,
+                  child: CircularPercentIndicator(
+                    radius: 23,
+                    animation: true,
+                    animationDuration: 750,
+                    center: AutoSizeText(
+                      "${article.progress}%",
+                      maxLines: 1,
+                      minFontSize: 5,
+                      maxFontSize: 11,
+                      style: const TextStyle(
+                          fontFamily: "DidactGothic",
+                          fontWeight: FontWeight.bold),
+                    ),
+                    percent: article.progress / 100,
+                    progressColor: getProgressColor(article.progress),
+                    backgroundColor: Colors.deepPurple.shade100,
+                    circularStrokeCap: CircularStrokeCap.round,
+                  ),
+                ),
+                Flexible(
+                  flex: 10,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        child: IconAndLabel(
+                            icon: Icon(
+                              Icons.circle,
+                              size: 15,
+                              color: getProgressColor(article.progress),
+                            ),
+                            label: AutoSizeText(
+                              "${article.progress}% progress made.",
+                              maxFontSize: 12,
+                              maxLines: 1,
+                              minFontSize: 7,
+                            )),
+                      ),
+                      FittedBox(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 1.0),
+                          child: IconAndLabel(
+                            icon: const Icon(
+                              Icons.access_time_rounded,
+                              size: 15,
+                              color: Colors.grey,
+                            ),
+                            label: AutoSizeText(
+                              "${getFormattedDuration(article.estCompletionTime)}, est. total time",
+                              maxFontSize: 12,
+                              maxLines: 1,
+                              minFontSize: 7,
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ))
+      ],
+    );
+  }
+
+  Future<void> _launchUrl(String url, BuildContext context) async {
+    Uri link = Uri.parse(url);
+    if (!await launchUrl(link, webOnlyWindowName: "_blank")) {
+      debugPrint("Something happened while opening link $url");
+    }
+  }
+}
+
+// /// Homepage
+// class MyYTPage extends StatefulWidget {
+//   const MyYTPage({super.key});
+
+//   @override
+//   _MyYTPageState createState() => _MyYTPageState();
+// }
+
+// class _MyYTPageState extends State<MyYTPage> {
+//   late YoutubePlayerController _controller;
+//   late TextEditingController _idController;
+//   late TextEditingController _seekToController;
+
+//   late PlayerState _playerState;
+//   late YoutubeMetaData _videoMetaData;
+//   double _volume = 100;
+//   bool _muted = false;
+//   bool _isPlayerReady = false;
+
+//   final List<String> _ids = [
+//     'nPt8bK2gbaU',
+//     'gQDByCdjUXw',
+//     'iLnmTe5Q2Qw',
+//     '_WoCV4c6XOE',
+//     'KmzdUe0RSJo',
+//     '6jZDSSZZxjQ',
+//     'p2lYr3vM_1w',
+//     '7QUtEmBT_-w',
+//     '34_PXCzGw1M',
+//   ];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _controller = YoutubePlayerController(
+//       initialVideoId: _ids.first,
+//       flags: const YoutubePlayerFlags(
+//         mute: false,
+//         autoPlay: true,
+//         disableDragSeek: false,
+//         loop: false,
+//         isLive: false,
+//         forceHD: false,
+//         enableCaption: true,
+//       ),
+//     )..addListener(listener);
+//     _idController = TextEditingController();
+//     _seekToController = TextEditingController();
+//     _videoMetaData = const YoutubeMetaData();
+//     _playerState = PlayerState.unknown;
+//   }
+
+//   void listener() {
+//     if (_isPlayerReady && mounted && !_controller.value.isFullScreen) {
+//       setState(() {
+//         _playerState = _controller.value.playerState;
+//         _videoMetaData = _controller.metadata;
+//       });
+//     }
+//   }
+
+//   @override
+//   void deactivate() {
+//     // Pauses video while navigating to next page.
+//     _controller.pause();
+//     super.deactivate();
+//   }
+
+//   @override
+//   void dispose() {
+//     _controller.dispose();
+//     _idController.dispose();
+//     _seekToController.dispose();
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return YoutubePlayerBuilder(
+//       onExitFullScreen: () {
+//         // The player forces portraitUp after exiting fullscreen. This overrides the behaviour.
+//         SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+//       },
+//       player: YoutubePlayer(
+//         controller: _controller,
+//         showVideoProgressIndicator: true,
+//         progressIndicatorColor: Colors.blueAccent,
+//         topActions: <Widget>[
+//           const SizedBox(width: 8.0),
+//           Expanded(
+//             child: Text(
+//               _controller.metadata.title,
+//               style: const TextStyle(
+//                 color: Colors.white,
+//                 fontSize: 18.0,
+//               ),
+//               overflow: TextOverflow.ellipsis,
+//               maxLines: 1,
+//             ),
+//           ),
+//           IconButton(
+//             icon: const Icon(
+//               Icons.settings,
+//               color: Colors.white,
+//               size: 25.0,
+//             ),
+//             onPressed: () {
+//               debugPrint('Settings Tapped!');
+//             },
+//           ),
+//         ],
+//         onReady: () {
+//           _isPlayerReady = true;
+//         },
+//         onEnded: (data) {
+//           _controller
+//               .load(_ids[(_ids.indexOf(data.videoId) + 1) % _ids.length]);
+//           _showSnackBar('Next Video Started!');
+//         },
+//       ),
+//       builder: (context, player) => Scaffold(
+//         appBar: AppBar(
+//           leading: Padding(
+//             padding: const EdgeInsets.only(left: 12.0),
+//             child: Image.asset(
+//               'assets/ypf.png',
+//               fit: BoxFit.fitWidth,
+//             ),
+//           ),
+//           title: const Text(
+//             'Youtube Player Flutter',
+//             style: TextStyle(color: Colors.white),
+//           ),
+//           actions: const [
+//             IconButton(icon: Icon(Icons.video_library), onPressed: null),
+//           ],
+//         ),
+//         body: ListView(
+//           children: [
+//             player,
+//             Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.stretch,
+//                 children: [
+//                   _space,
+//                   _text('Title', _videoMetaData.title),
+//                   _space,
+//                   _text('Channel', _videoMetaData.author),
+//                   _space,
+//                   _text('Video Id', _videoMetaData.videoId),
+//                   _space,
+//                   Row(
+//                     children: [
+//                       _text(
+//                         'Playback Quality',
+//                         _controller.value.playbackQuality ?? '',
+//                       ),
+//                       const Spacer(),
+//                       _text(
+//                         'Playback Rate',
+//                         '${_controller.value.playbackRate}x  ',
+//                       ),
+//                     ],
+//                   ),
+//                   _space,
+//                   TextField(
+//                     enabled: _isPlayerReady,
+//                     controller: _idController,
+//                     decoration: InputDecoration(
+//                       border: InputBorder.none,
+//                       hintText: 'Enter youtube <video id> or <link>',
+//                       fillColor: Colors.blueAccent.withAlpha(20),
+//                       filled: true,
+//                       hintStyle: const TextStyle(
+//                         fontWeight: FontWeight.w300,
+//                         color: Colors.blueAccent,
+//                       ),
+//                       suffixIcon: IconButton(
+//                         icon: const Icon(Icons.clear),
+//                         onPressed: () => _idController.clear(),
+//                       ),
+//                     ),
+//                   ),
+//                   _space,
+//                   Row(
+//                     children: [
+//                       _loadCueButton('LOAD'),
+//                       const SizedBox(width: 10.0),
+//                       _loadCueButton('CUE'),
+//                     ],
+//                   ),
+//                   _space,
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                     children: [
+//                       IconButton(
+//                         icon: const Icon(Icons.skip_previous),
+//                         onPressed: _isPlayerReady
+//                             ? () => _controller.load(_ids[
+//                                 (_ids.indexOf(_controller.metadata.videoId) -
+//                                         1) %
+//                                     _ids.length])
+//                             : null,
+//                       ),
+//                       IconButton(
+//                         icon: Icon(
+//                           _controller.value.isPlaying
+//                               ? Icons.pause
+//                               : Icons.play_arrow,
+//                         ),
+//                         onPressed: _isPlayerReady
+//                             ? () {
+//                                 _controller.value.isPlaying
+//                                     ? _controller.pause()
+//                                     : _controller.play();
+//                                 setState(() {});
+//                               }
+//                             : null,
+//                       ),
+//                       IconButton(
+//                         icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
+//                         onPressed: _isPlayerReady
+//                             ? () {
+//                                 _muted
+//                                     ? _controller.unMute()
+//                                     : _controller.mute();
+//                                 setState(() {
+//                                   _muted = !_muted;
+//                                 });
+//                               }
+//                             : null,
+//                       ),
+//                       FullScreenButton(
+//                         controller: _controller,
+//                         color: Colors.blueAccent,
+//                       ),
+//                       IconButton(
+//                         icon: const Icon(Icons.skip_next),
+//                         onPressed: _isPlayerReady
+//                             ? () => _controller.load(_ids[
+//                                 (_ids.indexOf(_controller.metadata.videoId) +
+//                                         1) %
+//                                     _ids.length])
+//                             : null,
+//                       ),
+//                     ],
+//                   ),
+//                   _space,
+//                   Row(
+//                     children: <Widget>[
+//                       const Text(
+//                         "Volume",
+//                         style: TextStyle(fontWeight: FontWeight.w300),
+//                       ),
+//                       Expanded(
+//                         child: Slider(
+//                           inactiveColor: Colors.transparent,
+//                           value: _volume,
+//                           min: 0.0,
+//                           max: 100.0,
+//                           divisions: 10,
+//                           label: '${(_volume).round()}',
+//                           onChanged: _isPlayerReady
+//                               ? (value) {
+//                                   setState(() {
+//                                     _volume = value;
+//                                   });
+//                                   _controller.setVolume(_volume.round());
+//                                 }
+//                               : null,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   _space,
+//                   AnimatedContainer(
+//                     duration: const Duration(milliseconds: 800),
+//                     decoration: BoxDecoration(
+//                       borderRadius: BorderRadius.circular(20.0),
+//                       color: _getStateColor(_playerState),
+//                     ),
+//                     padding: const EdgeInsets.all(8.0),
+//                     child: Text(
+//                       _playerState.toString(),
+//                       style: const TextStyle(
+//                         fontWeight: FontWeight.w300,
+//                         color: Colors.white,
+//                       ),
+//                       textAlign: TextAlign.center,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _text(String title, String value) {
+//     return RichText(
+//       text: TextSpan(
+//         text: '$title : ',
+//         style: const TextStyle(
+//           color: Colors.blueAccent,
+//           fontWeight: FontWeight.bold,
+//         ),
+//         children: [
+//           TextSpan(
+//             text: value,
+//             style: const TextStyle(
+//               color: Colors.blueAccent,
+//               fontWeight: FontWeight.w300,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Color _getStateColor(PlayerState state) {
+//     switch (state) {
+//       case PlayerState.unknown:
+//         return Colors.grey[700]!;
+//       case PlayerState.unStarted:
+//         return Colors.pink;
+//       case PlayerState.ended:
+//         return Colors.red;
+//       case PlayerState.playing:
+//         return Colors.blueAccent;
+//       case PlayerState.paused:
+//         return Colors.orange;
+//       case PlayerState.buffering:
+//         return Colors.yellow;
+//       case PlayerState.cued:
+//         return Colors.blue[900]!;
+//       default:
+//         return Colors.blue;
+//     }
+//   }
+
+//   Widget get _space => const SizedBox(height: 10);
+
+//   Widget _loadCueButton(String action) {
+//     return Expanded(
+//       child: MaterialButton(
+//         color: Colors.blueAccent,
+//         onPressed: _isPlayerReady
+//             ? () {
+//                 if (_idController.text.isNotEmpty) {
+//                   var id = YoutubePlayer.convertUrlToId(
+//                         _idController.text,
+//                       ) ??
+//                       '';
+//                   if (action == 'LOAD') _controller.load(id);
+//                   if (action == 'CUE') _controller.cue(id);
+//                   FocusScope.of(context).requestFocus(FocusNode());
+//                 } else {
+//                   _showSnackBar('Source can\'t be empty!');
+//                 }
+//               }
+//             : null,
+//         disabledColor: Colors.grey,
+//         disabledTextColor: Colors.black,
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 14.0),
+//           child: Text(
+//             action,
+//             style: const TextStyle(
+//               fontSize: 18.0,
+//               color: Colors.white,
+//               fontWeight: FontWeight.w300,
+//             ),
+//             textAlign: TextAlign.center,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   void _showSnackBar(String message) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text(
+//           message,
+//           textAlign: TextAlign.center,
+//           style: const TextStyle(
+//             fontWeight: FontWeight.w300,
+//             fontSize: 16.0,
+//           ),
+//         ),
+//         backgroundColor: Colors.blueAccent,
+//         behavior: SnackBarBehavior.floating,
+//         elevation: 1.0,
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(50.0),
+//         ),
+//       ),
+//     );
+//   }
+// }

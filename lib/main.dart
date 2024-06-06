@@ -1,4 +1,3 @@
-import 'package:animate_gradient/animate_gradient.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +8,10 @@ import 'package:responsive_1/widgets.dart';
 import 'package:split_view/split_view.dart';
 // import 'package:universal_html/html.dart' as my_html;
 
-void main() => runApp(const ProviderScope(child: MyApp()));
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MyApp()));
+}
 
 // class _EagerInitialization extends ConsumerWidget {
 //   const _EagerInitialization({required this.child});
@@ -31,10 +33,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // SystemChrome.setPreferredOrientations([
+    //   DeviceOrientation.portraitUp,
+    //   DeviceOrientation.portraitDown,
+    // ]);
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Productivity App',

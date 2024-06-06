@@ -1,17 +1,12 @@
 import 'dart:async';
-import 'dart:math';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:responsive_1/video_widgets.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
@@ -581,7 +576,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                               color: Colors.grey)),
                                       color: Colors.blue,
                                       visualDensity: VisualDensity.compact,
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            icon: const Icon(
+                                              Icons.edit_square,
+                                              size: 36,
+                                            ),
+                                            iconColor: Colors.blue,
+                                            iconPadding:
+                                                const EdgeInsets.all(8),
+                                            title: const Text(
+                                                "Dialog/Screen to edit Article Meta Data"),
+                                            content: const SizedBox(
+                                              height: 250,
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
+                                                  child: const Text("Cancel")),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
+                                                  child: const Text("Save"))
+                                            ],
+                                          ),
+                                        );
+                                      },
                                       icon: const Icon(
                                         Icons.edit,
                                         size: 20,
@@ -597,10 +622,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                         color: Colors.grey[350]!,
                                       ),
                                     ),
-                                    child: aboutArticleColumn(
-                                        article,
-                                        ref.read(
-                                            selectedTagListForFilteringProvider)))
+                                    child: AboutArticleContainer(article))
                               ],
                             ),
                           ),
@@ -717,6 +739,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                         ],
                                       ),
                                     ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: ElevatedButton(
+                                        onPressed: () {},
+                                        child: const Text("Read ")),
                                   )
                                 ],
                               ),
@@ -732,257 +760,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ],
       ),
     );
-  }
-
-  Column aboutArticleColumn(Article article, List<dynamic> selectedtags) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ExpandedBodyRowItem(
-          title: "URL",
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                flex: 15,
-                child: InkWell(
-                  onTap: () => _launchUrl(article.url, context),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        flex: 100,
-                        child: AutoSizeText(
-                          article.url.length > 40
-                              ? "${article.url.substring(0, 40)}..."
-                              : article.url,
-                          minFontSize: 12,
-                          maxFontSize: 14,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          wrapWords: false,
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                            fontFamily: "DidactGothic",
-                          ),
-                        ),
-                      ),
-                      if (!isMobile)
-                        const Flexible(flex: 2, child: SizedBox(width: 3)),
-                      Flexible(
-                          flex: 5,
-                          child: FittedBox(
-                            child: Icon(
-                              CupertinoIcons.arrow_up_right_square,
-                              size: 16,
-                              color: Colors.blue[600],
-                            ),
-                          )),
-                    ],
-                  ),
-                ),
-              ),
-              const Flexible(
-                  child: SizedBox(
-                width: 5,
-              )),
-              Flexible(
-                flex: 5,
-                // height: 25,
-                child: FittedBox(
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(7.0),
-                      color: Colors.white54,
-                      gradient: const LinearGradient(colors: [
-                        Color(0xfff9ce34),
-                        Color.fromARGB(187, 238, 42, 124),
-                        Color.fromARGB(169, 110, 66, 198),
-                      ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    ),
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ReaderScreen(article)));
-                      },
-                      // statesController: statesController,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(style: BorderStyle.none),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7.0)),
-                        padding: const EdgeInsets.symmetric(horizontal: 7),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        "Read here",
-                        style: TextStyle(color: Color.fromRGBO(66, 66, 66, 1)),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        ExpandedBodyRowItem(
-            title: "Description",
-            content: AutoSizeText(
-              article.description,
-              minFontSize: 5,
-              maxFontSize: 12,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-            )),
-        ExpandedBodyRowItem(
-          title: "Tags",
-          content: article.tags.isNotEmpty
-              ? Wrap(
-                  clipBehavior: Clip.antiAlias,
-                  spacing: 3,
-                  runSpacing: 3,
-                  children: article.tags
-                      .map((tagName) => Chip(
-                            backgroundColor: Colors.primaries[
-                                    Random().nextInt(Colors.primaries.length)]
-                                .withAlpha(15),
-                            side: !selectedtags.contains(tagName)
-                                ? BorderSide(
-                                    width: 0.2, color: Colors.grey.shade200)
-                                : const BorderSide(
-                                    width: 1, color: Colors.blue),
-                            label: AutoSizeText(
-                              tagName,
-                              minFontSize: 5,
-                              maxFontSize: 11,
-                              style: const TextStyle(color: Colors.black87),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            labelStyle: const TextStyle(),
-                          ))
-                      .toList(),
-                )
-              : null,
-        ),
-        ExpandedBodyRowItem(
-          title: "Folder path",
-          content: (article.folderPath?.isNotEmpty != null &&
-                  article.folderPath?.isNotEmpty == true)
-              ? BreadCrumb(
-                  items: article.folderPath!
-                      .map((folder) => BreadCrumbItem(
-                              content: AutoSizeText(
-                            folder,
-                            group: breadcrumbGroupAutoSize,
-                            softWrap: true,
-                            minFontSize: 7,
-                            maxFontSize: 12,
-                          )))
-                      .toList(),
-                  divider: const Icon(Icons.chevron_right_rounded),
-                )
-              : null,
-        ),
-        ExpandedBodyRowItem(
-            title: "Progresss",
-            content: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Flexible(
-                  flex: 3,
-                  child: CircularPercentIndicator(
-                    radius: 23,
-                    // animation: true,
-                    // animationDuration: 1000,
-                    center: AutoSizeText(
-                      "${article.progress}%",
-                      maxLines: 1,
-                      minFontSize: 5,
-                      maxFontSize: 11,
-                      style: const TextStyle(
-                          fontFamily: "DidactGothic",
-                          fontWeight: FontWeight.bold),
-                    ),
-                    percent: article.progress / 100,
-                    progressColor: getProgressColor(article.progress),
-                    backgroundColor: Colors.deepPurple.shade100,
-                    circularStrokeCap: CircularStrokeCap.round,
-                  ),
-                ),
-                Flexible(
-                  flex: 10,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      FittedBox(
-                        child: IconAndLabel(
-                            icon: Icon(
-                              Icons.circle,
-                              size: 15,
-                              color: getProgressColor(article.progress),
-                            ),
-                            label: AutoSizeText(
-                              "${article.progress}% progress made.",
-                              maxFontSize: 12,
-                              maxLines: 1,
-                              minFontSize: 7,
-                            )),
-                      ),
-                      FittedBox(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 1.0),
-                          child: IconAndLabel(
-                            icon: const Icon(
-                              Icons.access_time_rounded,
-                              size: 15,
-                              color: Colors.grey,
-                            ),
-                            label: AutoSizeText(
-                              "${getFormattedDuration(article.estCompletionTime)}, est. total time",
-                              maxFontSize: 12,
-                              maxLines: 1,
-                              minFontSize: 7,
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                )
-              ],
-            ))
-      ],
-    );
-  }
-
-  AutoSizeGroup breadcrumbGroupAutoSize = AutoSizeGroup();
-  Future<void> _launchUrl(String url, BuildContext context) async {
-    Uri link = Uri.parse(url);
-    if (!await launchUrl(link, webOnlyWindowName: "_blank")) {
-      debugPrint("Something happened while opening link $url");
-      // showDialog(
-      //   context: context,
-      //   builder: (context) => AlertDialog(
-      //     title: const Text(
-      //       "Could not open URL.",
-      //       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-      //     ),
-      //     content: Text("Unable to launch URL $url"),
-      //     actions: [
-      //       TextButton(
-      //           onPressed: () => Navigator.of(context).pop(),
-      //           child: const Text("OK"))
-      //     ],
-      //   ),
-      // );
-    }
   }
 
   //to remove inline tags from html content
@@ -1185,6 +962,14 @@ class CustomWidgetFactory extends WidgetFactory {
     return built ?? const SizedBox.shrink();
   }
 
+  @override
+  Widget? buildWebView(BuildTree tree, String url,
+      {double? height, Iterable<String>? sandbox, double? width}) {
+    print("BUILDING WEBVIEW URL: $url");
+    print("SANDBOX: $sandbox\n tag: ${tree.element.attributeSpans}");
+    return super.buildWebView(tree, url,
+        height: height, sandbox: sandbox, width: width);
+  }
   // @override
   // void parse(BuildTree tree) {
   //   if (tree.element.classes.contains('image')) {
