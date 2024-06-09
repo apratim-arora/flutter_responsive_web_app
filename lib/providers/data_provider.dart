@@ -331,10 +331,31 @@ class ScrollProgress extends _$ScrollProgress {
   @override
   double build(String articleId) {
     //use articleId to article specific progress
+
     return 0;
   }
 
   void setScrollProgress(double position) {
     state = position;
   }
+}
+
+@riverpod
+class TextCharsRead extends _$TextCharsRead {
+  int charsRead = 0;
+  int totalChars = 0;
+  @override
+  (int, int) build(String articleId) {
+    return (charsRead, totalChars);
+  }
+
+  void setCharsRead(int charsRead, int totalChars) {
+    state = (charsRead, totalChars);
+    this.totalChars = totalChars;
+    this.charsRead = charsRead;
+  }
+
+  double getTextReadProgress() => totalChars == 0
+      ? throw UnimplementedError("Text reading progress never set")
+      : charsRead / totalChars;
 }

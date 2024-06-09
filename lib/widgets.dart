@@ -2250,21 +2250,92 @@ class _AddNoteDialogState extends ConsumerState<AddNoteDialog> {
 class ScrollListener extends ConsumerStatefulWidget {
   final Widget child;
   final Article article;
+  final CustomWidgetFactory widgetFactory;
 
-  const ScrollListener({required this.article, required this.child, super.key});
+  const ScrollListener(
+      {required this.article,
+      required this.widgetFactory,
+      required this.child,
+      super.key});
 
   @override
   ScrollListenerState createState() => ScrollListenerState();
 }
 
 class ScrollListenerState extends ConsumerState<ScrollListener> {
+  late CustomWidgetFactory widgetFactory;
   final ScrollController _scrollController = ScrollController();
   double _totalContentHeight = 0;
 
   @override
+  void initState() {
+    widgetFactory = widget.widgetFactory;
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
+    widgetFactory.dispose();
     super.dispose();
+  }
+
+  void scrollProgressUpdate(ScrollNotification scrollNotification) {
+    // print(
+    //     "SCROLLED: CURRENT:(${scrollNotification.metrics.pixels}), MAX:($_totalContentHeight)");
+    ref
+        .read(scrollProgressProvider(widget.article.id).notifier)
+        .setScrollProgress(
+            (scrollNotification.metrics.pixels / _totalContentHeight)
+                .clamp(0.0, 1.0));
+  }
+
+  void textReadingProgress(ScrollNotification scrollNotification) {
+    final totalKeys = widgetFactory.textKeys.length;
+
+    if (totalKeys == 0) return;
+
+    int totalTextChars = 0;
+    int visibleTextChars = 0;
+    for (final key in widgetFactory.textKeys) {
+      final context = key.currentContext;
+
+      if (context != null) {
+        // String? text = widgetFactory.textContents[key];
+        final RenderBox box = context.findRenderObject() as RenderBox;
+
+        final viewportHeight = MediaQuery.of(context).size.height;
+        final scrollPosition = scrollNotification.metrics.pixels;
+
+        final widgetTop = box.localToGlobal(Offset.zero).dy + scrollPosition;
+        final widgetBottom = widgetTop + box.size.height;
+
+        final textContent = widgetFactory.textContents[key] ?? '';
+        final totalCharsInWidget = textContent.length;
+
+        // if the widget is completely scrolled past
+        if (widgetTop < scrollPosition + viewportHeight &&
+            widgetBottom <= scrollPosition + viewportHeight) {
+          visibleTextChars += totalCharsInWidget;
+        }
+        // if the widget is within the viewport
+        else if (widgetTop < scrollPosition + viewportHeight &&
+            widgetBottom > scrollPosition + viewportHeight) {
+          final widgetHeight = box.size.height;
+          final visibleHeight = (scrollPosition + viewportHeight) - widgetTop;
+          final visibleChars =
+              (visibleHeight / widgetHeight) * totalCharsInWidget;
+
+          visibleTextChars += visibleChars.toInt();
+        }
+
+        totalTextChars += totalCharsInWidget;
+      }
+    }
+    //setting progress as number of chars read
+    ref
+        .read(textCharsReadProvider(widget.article.id).notifier)
+        .setCharsRead(visibleTextChars, totalTextChars);
   }
 
   @override
@@ -2273,15 +2344,13 @@ class ScrollListenerState extends ConsumerState<ScrollListener> {
       onNotification: (scrollNotification) {
         if (scrollNotification is ScrollUpdateNotification) {
           _totalContentHeight = scrollNotification.metrics.maxScrollExtent;
-          print(
-              "SCROLLED: CURRENT:(${scrollNotification.metrics.pixels}), MAX:($_totalContentHeight)");
-          ref
-              .read(scrollProgressProvider(widget.article.id).notifier)
-              .setScrollProgress(
-                  (scrollNotification.metrics.pixels / _totalContentHeight)
-                      .clamp(0.0, 1.0));
-          print(
-              "SCROLL_PROGRESS: ${ref.read(scrollProgressProvider(widget.article.id))}");
+          scrollProgressUpdate(scrollNotification);
+          return true;
+        }
+        //update text progress when scrolling stops(not working, running after every ScrollUpdateNotification)
+        else if (scrollNotification is ScrollEndNotification) {
+          textReadingProgress(scrollNotification);
+          return true;
         }
         return false;
       },

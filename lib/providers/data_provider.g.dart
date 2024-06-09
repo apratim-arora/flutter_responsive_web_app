@@ -651,5 +651,149 @@ class _ScrollProgressProviderElement
   @override
   String get articleId => (origin as ScrollProgressProvider).articleId;
 }
+
+String _$textCharsReadHash() => r'f717d5720c0f6f4e84995f096c17bdd9d68d0dad';
+
+abstract class _$TextCharsRead
+    extends BuildlessAutoDisposeNotifier<(int, int)> {
+  late final String articleId;
+
+  (int, int) build(
+    String articleId,
+  );
+}
+
+/// See also [TextCharsRead].
+@ProviderFor(TextCharsRead)
+const textCharsReadProvider = TextCharsReadFamily();
+
+/// See also [TextCharsRead].
+class TextCharsReadFamily extends Family<(int, int)> {
+  /// See also [TextCharsRead].
+  const TextCharsReadFamily();
+
+  /// See also [TextCharsRead].
+  TextCharsReadProvider call(
+    String articleId,
+  ) {
+    return TextCharsReadProvider(
+      articleId,
+    );
+  }
+
+  @override
+  TextCharsReadProvider getProviderOverride(
+    covariant TextCharsReadProvider provider,
+  ) {
+    return call(
+      provider.articleId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'textCharsReadProvider';
+}
+
+/// See also [TextCharsRead].
+class TextCharsReadProvider
+    extends AutoDisposeNotifierProviderImpl<TextCharsRead, (int, int)> {
+  /// See also [TextCharsRead].
+  TextCharsReadProvider(
+    String articleId,
+  ) : this._internal(
+          () => TextCharsRead()..articleId = articleId,
+          from: textCharsReadProvider,
+          name: r'textCharsReadProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$textCharsReadHash,
+          dependencies: TextCharsReadFamily._dependencies,
+          allTransitiveDependencies:
+              TextCharsReadFamily._allTransitiveDependencies,
+          articleId: articleId,
+        );
+
+  TextCharsReadProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.articleId,
+  }) : super.internal();
+
+  final String articleId;
+
+  @override
+  (int, int) runNotifierBuild(
+    covariant TextCharsRead notifier,
+  ) {
+    return notifier.build(
+      articleId,
+    );
+  }
+
+  @override
+  Override overrideWith(TextCharsRead Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: TextCharsReadProvider._internal(
+        () => create()..articleId = articleId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        articleId: articleId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeNotifierProviderElement<TextCharsRead, (int, int)>
+      createElement() {
+    return _TextCharsReadProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TextCharsReadProvider && other.articleId == articleId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, articleId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin TextCharsReadRef on AutoDisposeNotifierProviderRef<(int, int)> {
+  /// The parameter `articleId` of this provider.
+  String get articleId;
+}
+
+class _TextCharsReadProviderElement
+    extends AutoDisposeNotifierProviderElement<TextCharsRead, (int, int)>
+    with TextCharsReadRef {
+  _TextCharsReadProviderElement(super.provider);
+
+  @override
+  String get articleId => (origin as TextCharsReadProvider).articleId;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

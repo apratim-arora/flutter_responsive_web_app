@@ -73,6 +73,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   late bool isMobile;
   bool addNoteActive = false;
   Size mainContainerSize = const Size(0, 0);
+  late CustomWidgetFactory widgetFactory;
   ScrollController customScrollViewController = ScrollController();
 
   void updateMainContainerSize(Size size) {
@@ -218,6 +219,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   void initState() {
     super.initState();
     article = widget.article;
+    widgetFactory =
+        CustomWidgetFactory(_onSelectionChanged, ref, _selectedUuid, article);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(
         const Duration(milliseconds: 300),
@@ -302,6 +306,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           const MyAnimatedBackground(),
           ScrollListener(
             article: article,
+            widgetFactory: widgetFactory,
             child: CustomScrollView(
               controller: customScrollViewController,
               slivers: [
@@ -694,12 +699,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                                     return null;
                                                   },
                                                   factoryBuilder: () =>
-                                                      CustomWidgetFactory(
-                                                    _onSelectionChanged,
-                                                    ref,
-                                                    _selectedUuid,
-                                                    widget.article,
-                                                  ),
+                                                      widgetFactory,
                                                   onTapUrl: (url) {
                                                     debugPrint('tapped $url');
                                                     return false;
@@ -815,6 +815,9 @@ class CustomWidgetFactory extends WidgetFactory {
   final WidgetRef ref;
   final String? selectedUuid;
   final Article article;
+  final List<GlobalKey> textKeys = [];
+
+  final Map<GlobalKey, String> textContents = {};
 
   CustomWidgetFactory(
       this.onSelectionChanged, this.ref, this.selectedUuid, this.article);
@@ -822,11 +825,17 @@ class CustomWidgetFactory extends WidgetFactory {
   @override
   Widget? buildText(
       BuildTree tree, InheritedProperties resolved, InlineSpan text) {
+    //progress tracking part
+    final key = GlobalKey();
+    textKeys.add(key);
+    textContents[key] = text.toPlainText();
+    //rest
     final uuid = tree.element.attributes['data-uuid'];
     if (uuid == null) return null;
     final Map<String, List<Highlight>> highlights =
         ref.read(highlightNotifierProvider);
     return SelectableText.rich(
+      key: key, //adding key for progress char based progress tracking
       TextSpan(
         children: _buildHighlightedSpans(text as TextSpan, highlights, uuid),
       ),
