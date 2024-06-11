@@ -186,7 +186,7 @@ final highlightNotifierProvider =
 );
 
 typedef _$HighlightNotifier = Notifier<Map<String, List<Highlight>>>;
-String _$videoProgressHash() => r'72afaad496f9b92aedcb6f13aa7bdbbe39b729d1';
+String _$videoProgressHash() => r'db703b11dbfa21141b83b716c3af72e6d32d33d7';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -652,7 +652,7 @@ class _ScrollProgressProviderElement
   String get articleId => (origin as ScrollProgressProvider).articleId;
 }
 
-String _$textCharsReadHash() => r'f717d5720c0f6f4e84995f096c17bdd9d68d0dad';
+String _$textCharsReadHash() => r'27fb6014e9ac67eeea76d4f788585971301fb946';
 
 abstract class _$TextCharsRead
     extends BuildlessAutoDisposeNotifier<(int, int)> {
@@ -794,6 +794,150 @@ class _TextCharsReadProviderElement
 
   @override
   String get articleId => (origin as TextCharsReadProvider).articleId;
+}
+
+String _$combinedProgressHash() => r'2ff76fb625a00806fa68bdb8684bb69b162f9c82';
+
+abstract class _$CombinedProgress
+    extends BuildlessAutoDisposeAsyncNotifier<String> {
+  late final String articleID;
+
+  FutureOr<String> build(
+    String articleID,
+  );
+}
+
+/// See also [CombinedProgress].
+@ProviderFor(CombinedProgress)
+const combinedProgressProvider = CombinedProgressFamily();
+
+/// See also [CombinedProgress].
+class CombinedProgressFamily extends Family<AsyncValue<String>> {
+  /// See also [CombinedProgress].
+  const CombinedProgressFamily();
+
+  /// See also [CombinedProgress].
+  CombinedProgressProvider call(
+    String articleID,
+  ) {
+    return CombinedProgressProvider(
+      articleID,
+    );
+  }
+
+  @override
+  CombinedProgressProvider getProviderOverride(
+    covariant CombinedProgressProvider provider,
+  ) {
+    return call(
+      provider.articleID,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'combinedProgressProvider';
+}
+
+/// See also [CombinedProgress].
+class CombinedProgressProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<CombinedProgress, String> {
+  /// See also [CombinedProgress].
+  CombinedProgressProvider(
+    String articleID,
+  ) : this._internal(
+          () => CombinedProgress()..articleID = articleID,
+          from: combinedProgressProvider,
+          name: r'combinedProgressProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$combinedProgressHash,
+          dependencies: CombinedProgressFamily._dependencies,
+          allTransitiveDependencies:
+              CombinedProgressFamily._allTransitiveDependencies,
+          articleID: articleID,
+        );
+
+  CombinedProgressProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.articleID,
+  }) : super.internal();
+
+  final String articleID;
+
+  @override
+  FutureOr<String> runNotifierBuild(
+    covariant CombinedProgress notifier,
+  ) {
+    return notifier.build(
+      articleID,
+    );
+  }
+
+  @override
+  Override overrideWith(CombinedProgress Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: CombinedProgressProvider._internal(
+        () => create()..articleID = articleID,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        articleID: articleID,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<CombinedProgress, String>
+      createElement() {
+    return _CombinedProgressProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CombinedProgressProvider && other.articleID == articleID;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, articleID.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin CombinedProgressRef on AutoDisposeAsyncNotifierProviderRef<String> {
+  /// The parameter `articleID` of this provider.
+  String get articleID;
+}
+
+class _CombinedProgressProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<CombinedProgress, String>
+    with CombinedProgressRef {
+  _CombinedProgressProviderElement(super.provider);
+
+  @override
+  String get articleID => (origin as CombinedProgressProvider).articleID;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

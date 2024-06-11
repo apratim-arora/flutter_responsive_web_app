@@ -252,30 +252,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           }
         },
       );
-      // setState(() {
-      // print(
-      //     "SCROLL_INIT to PROGRESS:${ref.read(scrollProgressProvider(article.id))}; EXTENT: ${customScrollViewController.position.maxScrollExtent}");
-      // customScrollViewController.animateTo(
-      //     ref.read(scrollProgressProvider(article.id)) *
-      //         customScrollViewController.position.maxScrollExtent,
-      //     duration: const Duration(milliseconds: 500),
-      //     curve: Curves.easeIn);
-      // Future.delayed(
-      //   const Duration(seconds: 1),
-      //   () => print(
-      //       "now after 1 sec, extent total: ${customScrollViewController.position.extentTotal}, ${customScrollViewController.position.maxScrollExtent}"),
-      // );
-      // });
-
-      // Future.delayed(
-      //     const Duration(seconds: 1),
-      //     () => setState(() {
-      //           customScrollViewController.animateTo(
-      //               ref.read(scrollProgressProvider(article.id)) *
-      //                   customScrollViewController.position.maxScrollExtent,
-      //               duration: const Duration(milliseconds: 500),
-      //               curve: Curves.easeIn);
-      //         }));
     });
   }
 
@@ -288,6 +264,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   bool isSelected2 = false;
   @override
   Widget build(BuildContext context) {
+    ref.listen<FutureOr<String>>(combinedProgressProvider(article.id).future,
+        (_, val) async {
+      ///listener made just to have provider instantiated, to show progress in logs.
+    });
     isMobile = MediaQuery.of(context).size.width < 600;
     double screenHeight = MediaQuery.of(context).size.height;
     final highlights = ref.watch(highlightNotifierProvider);
@@ -451,106 +431,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             onTap: () => _toggleAddNote(),
                             makeDivider: false,
                           ),
-                          // AppbarIconButton(
-                          //   tooltip: "Bigger Text",
-                          //   icon: const Icon(Icons.add),
-                          //   onPressed: () => ref
-                          //       .read(textScaleFactorProvider.notifier)
-                          //       .increaseSizeFactor(),
-                          // ),
-                          // AppbarIconButton(
-                          //   tooltip: "Smaller Text",
-                          //   icon: const Icon(CupertinoIcons.minus),
-                          //   onPressed: () => ref
-                          //       .read(textScaleFactorProvider.notifier)
-                          //       .decreaseSizeFactor(),
-                          // ),
-                          // AppbarIconButton(
-                          //   tooltip: "Highlight Selection",
-                          //   icon: Icon(
-                          //     CupertinoIcons.pencil,
-                          //     color: highlightColor,
-                          //   ),
-                          //   onPressed: (_selection != null &&
-                          //           _selectedUuid != null)
-                          //       ? () {
-                          //           ref
-                          //               .read(
-                          //                   highlightNotifierProvider.notifier)
-                          //               .addHighlight(
-                          //                 _selectedUuid!,
-                          //                 TextRange(
-                          //                     start: _selection!.start,
-                          //                     end: _selection!.end),
-                          //               );
-                          //           _selection = null;
-                          //         }
-                          //       : null,
-                          // ),
-                          // PopupMenuButton(
-                          //   position: PopupMenuPosition.under,
-                          //   constraints: const BoxConstraints(
-                          //       minWidth: double.minPositive,
-                          //       maxWidth: 5 * 56.0),
-                          //   child: const AppbarIconButton(
-                          //     tooltip: "Highlight color",
-                          //     icon: Icon(
-                          //       Icons.arrow_drop_down_circle_outlined,
-                          //     ),
-                          //     onPressed: null,
-                          //   ),
-                          //   itemBuilder: (context) => [
-                          //     PopupMenuItem(
-                          //       onTap: () => ref
-                          //           .read(highLightColorProvider.notifier)
-                          //           .updateColor(Colors.yellow),
-                          //       child: const ColorSelectionDropdownItem(
-                          //           Colors.yellow),
-                          //     ),
-                          //     PopupMenuItem(
-                          //       onTap: () => ref
-                          //           .read(highLightColorProvider.notifier)
-                          //           .updateColor(Colors.red),
-                          //       child: const ColorSelectionDropdownItem(
-                          //           Colors.red),
-                          //     ),
-                          //     PopupMenuItem(
-                          //       onTap: () => ref
-                          //           .read(highLightColorProvider.notifier)
-                          //           .updateColor(Colors.green),
-                          //       child: const ColorSelectionDropdownItem(
-                          //           Colors.green),
-                          //     ),
-                          //     PopupMenuItem(
-                          //       onTap: () => ref
-                          //           .read(highLightColorProvider.notifier)
-                          //           .updateColor(Colors.blue),
-                          //       child: const ColorSelectionDropdownItem(
-                          //           Colors.blue),
-                          //     ),
-                          //   ],
-                          // ),
-                          // AppbarIconButton(
-                          //   tooltip: "Erase Highlight",
-                          //   icon: Icon(
-                          //     Icons.stay_current_landscape_rounded,
-                          //     color: eraserActive ? Colors.blue : Colors.black,
-                          //   ),
-                          //   onPressed: () {
-                          //     _toggleEraser();
-                          //     debugPrint("Cursor changed: $eraserActive");
-                          //   },
-                          // ),
-                          // AppbarIconButton(
-                          //   tooltip: "Add Note",
-                          //   icon: Icon(
-                          //     Icons.note_add,
-                          //     color: addNoteActive ? Colors.blue : Colors.black,
-                          //   ),
-                          //   onPressed: () {
-                          //     _toggleAddNote();
-                          //   },
-                          // ),
                         ],
                       ),
                     ),

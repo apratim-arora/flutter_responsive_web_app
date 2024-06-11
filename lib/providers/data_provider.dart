@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_dropdown/multiselect_dropdown.dart';
+import 'package:responsive_1/constants.dart';
 import 'package:responsive_1/models.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'data_provider.g.dart';
@@ -246,7 +247,7 @@ class HighlightNotifier extends _$HighlightNotifier {
 
 @Riverpod(keepAlive: true)
 class VideoProgress extends _$VideoProgress {
-  ///ask for provider[videoUUid]["currentPosition"] && provider[videoUUid]["totalDuration"]
+  ///ask for provider[videoUUid][videoCurrentPosition] && provider[videoUUid][videoTotalDuration]
 
   @override
   FutureOr<Map<String, Map<String, Duration>?>?> build(String articleId) async {
@@ -259,11 +260,11 @@ class VideoProgress extends _$VideoProgress {
       Duration totalDuration) async {
     Map<String, Map<String, Duration>?> newState = state.value ?? {};
     newState[videoUuid] = {
-      "currentPosition": currentPosition,
-      "totalDuration": totalDuration
+      videoCurrentPosition: currentPosition,
+      videoTotalDuration: totalDuration
     };
     print(
-        "updateVideoProgress provider : ${newState[videoUuid]?["currentPosition"]}= $currentPosition, @videoUUID:$videoUuid\t fullMap:${state.value}");
+        "updateVideoProgress provider : ${newState[videoUuid]?[videoCurrentPosition]}= $currentPosition, @videoUUID:$videoUuid\t fullMap:${state.value}");
     state = AsyncValue.data(newState);
   }
 
@@ -276,7 +277,7 @@ class VideoProgress extends _$VideoProgress {
   Map<String, Duration>? getVideoProgress(String videoUuid) {
     ///returns the video progress.
     ///Returns null if videoUUId not found.
-    ///returns map["currentPosition"] and map["totalDuration"] as double Type
+    ///returns map[videoCurrentPosition] and map[videoTotalDuration] as Duration Type
     print(
         "current state = ${state.value} and @videoUuid = ${state.value?[videoUuid]}(returning)");
     return state.value?[videoUuid];
@@ -342,20 +343,45 @@ class ScrollProgress extends _$ScrollProgress {
 
 @riverpod
 class TextCharsRead extends _$TextCharsRead {
-  int charsRead = 0;
-  int totalChars = 0;
+  int _charsRead = 0;
+  int _totalChars = 0;
   @override
   (int, int) build(String articleId) {
-    return (charsRead, totalChars);
+    return (_charsRead, _totalChars);
   }
 
   void setCharsRead(int charsRead, int totalChars) {
     state = (charsRead, totalChars);
-    this.totalChars = totalChars;
-    this.charsRead = charsRead;
+    _totalChars = totalChars;
+    _charsRead = charsRead;
   }
 
-  double getTextReadProgress() => totalChars == 0
+  double getTextReadProgress() => _totalChars == 0
       ? throw UnimplementedError("Text reading progress never set")
-      : charsRead / totalChars;
+      : _charsRead / _totalChars;
+}
+
+@riverpod
+class CombinedProgress extends _$CombinedProgress {
+  @override
+  FutureOr<String> build(String articleID) async {
+    var (charsRead, totalChars) = ref.watch(textCharsReadProvider(articleID));
+    var videoP = await ref.watch(videoProgressProvider(articleID).future);
+    int videoCharsRead = 0, totalVideoChars = 0;
+    String textProgress = "[Text] = $charsRead/$totalChars";
+    videoP?.forEach((_, value) => value?.forEach(
+          (key, value) {
+            if (key == videoCurrentPosition) {
+              videoCharsRead += value.inSeconds * videoSecondToChar;
+            } else if (key == videoTotalDuration) {
+              totalVideoChars += value.inSeconds * videoSecondToChar;
+            }
+          },
+        ));
+    print(
+        "$textProgress\n[VIDEO] = $videoCharsRead/$totalVideoChars \n[TOTAL] = ${videoCharsRead + charsRead}/${totalVideoChars + totalChars}, ${(videoCharsRead + charsRead) / (totalVideoChars + totalChars)}->${((videoCharsRead + charsRead) / (totalVideoChars + totalChars)).toStringAsFixed(2)}");
+
+    return ((videoCharsRead + charsRead) / (totalVideoChars + totalChars))
+        .toStringAsFixed(2);
+  }
 }
