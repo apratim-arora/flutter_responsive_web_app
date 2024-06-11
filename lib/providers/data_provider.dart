@@ -362,10 +362,35 @@ class TextCharsRead extends _$TextCharsRead {
 }
 
 @riverpod
+class ImageSeenProgress extends _$ImageSeenProgress {
+  int _charsRead = 0;
+  int _totalChars = 0;
+
+  @override
+  (int, int) build(String articleId) {
+    return (_charsRead, _totalChars);
+  }
+
+  void setProgress(int charsRead, int totalChars) {
+    state = (charsRead, totalChars);
+    _totalChars = totalChars;
+    _charsRead = charsRead;
+  }
+
+  double getProgress() => _totalChars == 0
+      ? throw UnimplementedError("Image Seeing progress never set")
+      : _charsRead / _totalChars;
+}
+
+@riverpod
 class CombinedProgress extends _$CombinedProgress {
   @override
   FutureOr<String> build(String articleID) async {
     var (charsRead, totalChars) = ref.watch(textCharsReadProvider(articleID));
+    var (imgCharsRead, totalImgChars) =
+        ref.watch(imageSeenProgressProvider(articleID));
+        //keeping non-future providers watch above future providers
+        // as they unknowingly become 0 otherwise
     var videoP = await ref.watch(videoProgressProvider(articleID).future);
     int videoCharsRead = 0, totalVideoChars = 0;
     String textProgress = "[Text] = $charsRead/$totalChars";
@@ -378,10 +403,11 @@ class CombinedProgress extends _$CombinedProgress {
             }
           },
         ));
+    double progress = ((videoCharsRead + charsRead + imgCharsRead) /
+        (totalVideoChars + totalChars + totalImgChars));
     print(
-        "$textProgress\n[VIDEO] = $videoCharsRead/$totalVideoChars \n[TOTAL] = ${videoCharsRead + charsRead}/${totalVideoChars + totalChars}, ${(videoCharsRead + charsRead) / (totalVideoChars + totalChars)}->${((videoCharsRead + charsRead) / (totalVideoChars + totalChars)).toStringAsFixed(2)}");
+        "$textProgress\n[IMG] = $imgCharsRead/$totalImgChars\n[VIDEO] = $videoCharsRead/$totalVideoChars \n[TOTAL] = ${videoCharsRead + charsRead + imgCharsRead}/${totalVideoChars + totalChars + totalImgChars}, $progress->${progress.toStringAsFixed(2)}");
 
-    return ((videoCharsRead + charsRead) / (totalVideoChars + totalChars))
-        .toStringAsFixed(2);
+    return progress.toStringAsFixed(2);
   }
 }

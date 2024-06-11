@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:photo_view/photo_view.dart';
@@ -55,6 +54,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
   Your browser does not support the video tag.
   <figcaption> Hello World</figcaption>
 </video>
+<p><img src="https://www.shutterstock.com/shutterstock/photos/2056485080/display_1500/stock-vector-address-and-navigation-bar-icon-business-concept-search-www-http-pictogram-d-concept-2056485080.jpg" alt="Flowers image"></p>
   </article>
 </body>
 </html>
@@ -695,7 +695,7 @@ class CustomWidgetFactory extends WidgetFactory {
   final WidgetRef ref;
   final String? selectedUuid;
   final Article article;
-  final List<GlobalKey> textKeys = [];
+  final List<GlobalKey> textKeys = [], imageKeys = [];
 
   final Map<GlobalKey, String> textContents = {};
 
@@ -812,10 +812,12 @@ class CustomWidgetFactory extends WidgetFactory {
   @override
   Widget buildImageWidget(BuildTree tree, ImageSource src) {
     final built = super.buildImageWidget(tree, src);
-
+    final key = GlobalKey();
+    imageKeys.add(key);
     if (built is Image) {
       final url = src.url;
       return Builder(
+        key: key,
         builder: (context) => GestureDetector(
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(

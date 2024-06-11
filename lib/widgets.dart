@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:multi_dropdown/multiselect_dropdown.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:responsive_1/constants.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/my_expansion_panel_widget.dart';
 import 'package:responsive_1/providers/data_provider.dart';
@@ -2281,13 +2282,44 @@ class ScrollListenerState extends ConsumerState<ScrollListener> {
   }
 
   void scrollProgressUpdate(ScrollNotification scrollNotification) {
-    // print(
-    //     "SCROLLED: CURRENT:(${scrollNotification.metrics.pixels}), MAX:($_totalContentHeight)");
     ref
         .read(scrollProgressProvider(widget.article.id).notifier)
         .setScrollProgress(
             (scrollNotification.metrics.pixels / _totalContentHeight)
                 .clamp(0.0, 1.0));
+  }
+
+  void imageSeeingProgress(ScrollNotification scrollNotification) {
+    final totalKeys = widgetFactory.imageKeys.length;
+    if (totalKeys == 0) return;
+    int visibleImgChars = 0;
+    int totalImgChars = 0;
+    final scrollPosition = scrollNotification.metrics.pixels;
+    final double screenBottom =
+        scrollPosition + MediaQuery.of(context).size.height;
+
+    for (final key in widgetFactory.imageKeys) {
+      final context = key.currentContext;
+      if (context != null) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final widgetHeight = box.size.height;
+        final double widgetTop =
+            box.localToGlobal(Offset.zero).dy + scrollPosition;
+        final double widgetBottom = widgetTop + widgetHeight;
+        if (widgetTop < screenBottom && widgetBottom <= screenBottom) {
+          visibleImgChars += imageDurationInChar;
+        } else if (widgetTop < screenBottom && widgetBottom > screenBottom) {
+          final visibleHeight = screenBottom - widgetTop;
+          final visibleChars =
+              (visibleHeight / widgetHeight) * imageDurationInChar;
+          visibleImgChars += visibleChars.toInt();
+        }
+        totalImgChars += imageDurationInChar;
+      }
+    }
+    ref
+        .read(imageSeenProgressProvider(widget.article.id).notifier)
+        .setProgress(visibleImgChars, totalImgChars);
   }
 
   void textReadingProgress(ScrollNotification scrollNotification) {
@@ -2307,9 +2339,11 @@ class ScrollListenerState extends ConsumerState<ScrollListener> {
         final viewportHeight = MediaQuery.of(context).size.height;
         final scrollPosition = scrollNotification.metrics.pixels;
 
-        final widgetTop = box.localToGlobal(Offset.zero).dy + scrollPosition;
-        final widgetBottom = widgetTop + box.size.height;
-
+        final widgetTop = box.localToGlobal(Offset.zero).dy +
+            scrollPosition; // adding scrollPosition as localToGlobal()
+        final widgetBottom = widgetTop +
+            box.size.height; // provides position relative to viewport
+        // i.e -ve if above screen
         final textContent = widgetFactory.textContents[key] ?? '';
         final totalCharsInWidget = textContent.length;
 
@@ -2350,6 +2384,7 @@ class ScrollListenerState extends ConsumerState<ScrollListener> {
         //update text progress when scrolling stops(not working, running after every ScrollUpdateNotification)
         else if (scrollNotification is ScrollEndNotification) {
           textReadingProgress(scrollNotification);
+          imageSeeingProgress(scrollNotification);
           return true;
         }
         return false;

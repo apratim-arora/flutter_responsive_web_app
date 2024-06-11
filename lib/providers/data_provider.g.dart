@@ -796,7 +796,151 @@ class _TextCharsReadProviderElement
   String get articleId => (origin as TextCharsReadProvider).articleId;
 }
 
-String _$combinedProgressHash() => r'2ff76fb625a00806fa68bdb8684bb69b162f9c82';
+String _$imageSeenProgressHash() => r'5ebeec2841ff05346a5d766c838889549d5f208f';
+
+abstract class _$ImageSeenProgress
+    extends BuildlessAutoDisposeNotifier<(int, int)> {
+  late final String articleId;
+
+  (int, int) build(
+    String articleId,
+  );
+}
+
+/// See also [ImageSeenProgress].
+@ProviderFor(ImageSeenProgress)
+const imageSeenProgressProvider = ImageSeenProgressFamily();
+
+/// See also [ImageSeenProgress].
+class ImageSeenProgressFamily extends Family<(int, int)> {
+  /// See also [ImageSeenProgress].
+  const ImageSeenProgressFamily();
+
+  /// See also [ImageSeenProgress].
+  ImageSeenProgressProvider call(
+    String articleId,
+  ) {
+    return ImageSeenProgressProvider(
+      articleId,
+    );
+  }
+
+  @override
+  ImageSeenProgressProvider getProviderOverride(
+    covariant ImageSeenProgressProvider provider,
+  ) {
+    return call(
+      provider.articleId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'imageSeenProgressProvider';
+}
+
+/// See also [ImageSeenProgress].
+class ImageSeenProgressProvider
+    extends AutoDisposeNotifierProviderImpl<ImageSeenProgress, (int, int)> {
+  /// See also [ImageSeenProgress].
+  ImageSeenProgressProvider(
+    String articleId,
+  ) : this._internal(
+          () => ImageSeenProgress()..articleId = articleId,
+          from: imageSeenProgressProvider,
+          name: r'imageSeenProgressProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$imageSeenProgressHash,
+          dependencies: ImageSeenProgressFamily._dependencies,
+          allTransitiveDependencies:
+              ImageSeenProgressFamily._allTransitiveDependencies,
+          articleId: articleId,
+        );
+
+  ImageSeenProgressProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.articleId,
+  }) : super.internal();
+
+  final String articleId;
+
+  @override
+  (int, int) runNotifierBuild(
+    covariant ImageSeenProgress notifier,
+  ) {
+    return notifier.build(
+      articleId,
+    );
+  }
+
+  @override
+  Override overrideWith(ImageSeenProgress Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ImageSeenProgressProvider._internal(
+        () => create()..articleId = articleId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        articleId: articleId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeNotifierProviderElement<ImageSeenProgress, (int, int)>
+      createElement() {
+    return _ImageSeenProgressProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ImageSeenProgressProvider && other.articleId == articleId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, articleId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ImageSeenProgressRef on AutoDisposeNotifierProviderRef<(int, int)> {
+  /// The parameter `articleId` of this provider.
+  String get articleId;
+}
+
+class _ImageSeenProgressProviderElement
+    extends AutoDisposeNotifierProviderElement<ImageSeenProgress, (int, int)>
+    with ImageSeenProgressRef {
+  _ImageSeenProgressProviderElement(super.provider);
+
+  @override
+  String get articleId => (origin as ImageSeenProgressProvider).articleId;
+}
+
+String _$combinedProgressHash() => r'6774388aa4a491c1d4a6f827e8c9b86ab5640e06';
 
 abstract class _$CombinedProgress
     extends BuildlessAutoDisposeAsyncNotifier<String> {
