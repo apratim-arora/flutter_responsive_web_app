@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:responsive_1/constants.dart';
 import 'package:responsive_1/models.dart';
 import 'package:responsive_1/providers/data_provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 class DirectVideoPlayer extends ConsumerStatefulWidget {
   final String url;
@@ -22,6 +24,8 @@ class DirectVideoPlayer extends ConsumerStatefulWidget {
 class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   late VideoPlayerController _controller;
   late String articleId, videoUuid;
+  late Duration? resumePoint;
+  bool pastProgressLoaded = false;
   int i = 0;
 
   @override
@@ -29,15 +33,16 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
     super.initState();
     articleId = widget.articleId;
     videoUuid = widget.videoUuid;
-    var resumePoint = ref
+    resumePoint = ref
         .read(videoProgressProvider(articleId).notifier)
-        .getVideoProgress(videoUuid)?["currentPosition"];
+        .getVideoProgress(videoUuid)?[videoCurrentPosition];
     articleId = widget.articleId;
     videoUuid = widget.videoUuid;
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
       ..initialize().then((_) {
         setState(() {
-          if (resumePoint != null) _controller.seekTo(resumePoint);
+          if (resumePoint != null) _controller.seekTo(resumePoint!);
+          pastProgressLoaded = true;
         });
       })
       ..addListener(_updateWatchedProgress);
@@ -46,8 +51,10 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   void _updateWatchedProgress() {
     setState(() {});
     if (i % 5 == 0) {
+      if (!pastProgressLoaded) return; //important as pos
       final position = _controller.value.position;
       final duration = _controller.value.duration;
+
       ref
           .read(videoProgressProvider(articleId).notifier)
           .updateVideoProgress(videoUuid, position, duration);
@@ -61,7 +68,7 @@ class DirectVideoPlayerState extends ConsumerState<DirectVideoPlayer> {
   Widget build(BuildContext context) {
     // ref.listen(videoProgressProvider(widget.articleId), (previous, next) {
     //   next.whenData((value) {
-    //     Duration? progress = value?[widget.videoUuid]?["currentPosition"];
+    //     Duration? progress = value?[widget.videoUuid]?[videoCurrentPosition];
     //     if (progress != null) {
     //       _controller.seekTo(progress);
     //       print("ref.listen worked");
@@ -285,7 +292,8 @@ class _ControlsOverlay extends ConsumerWidget {
                             .then((_) {
                           Duration? p = ref
                               .read(videoProgressProvider(articleId).notifier)
-                              .getVideoProgress(videoUuid)?["currentPosition"];
+                              .getVideoProgress(
+                                  videoUuid)?[videoCurrentPosition];
                           // debugPrint("RUNNING THEN AFTER POP: value: $p");
                           if (p != null) {
                             print("pop seek worked");
@@ -420,6 +428,88 @@ class _FullVideoScreenPlayerState
           },
         ),
       ),
+    );
+  }
+}
+
+class IframeWidget extends ConsumerStatefulWidget {
+  const IframeWidget(
+      {required this.uuid,
+      required this.url,
+      required this.articleId,
+      super.key});
+  final String uuid, url, articleId;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _IframeWidgetState();
+}
+
+class _IframeWidgetState extends ConsumerState<IframeWidget> {
+  late YoutubePlayerController controller;
+  bool _isMounted = true;
+
+  @override
+  void initState() {
+    var resumePoint = ref
+        .read(videoProgressProvider(widget.articleId).notifier)
+        .getVideoProgress(widget.uuid)?[videoCurrentPosition]
+        ?.inSeconds;
+    controller = YoutubePlayerController.fromVideoId(
+      videoId: YoutubePlayerController.convertUrlToId(widget.url) ?? "",
+      startSeconds: resumePoint?.toDouble(),
+      autoPlay: false,
+      params: const YoutubePlayerParams(showFullscreenButton: true),
+    )..listen((currentStatus) => _saveProgress(currentStatus));
+    // _seekToLastProgress();
+    super.initState();
+  }
+
+  void _seekToLastProgress() async {
+    if (!_isMounted) return;
+    var resumePoint = ref
+        .read(videoProgressProvider(widget.articleId).notifier)
+        .getVideoProgress(widget.uuid)?[videoCurrentPosition]
+        ?.inSeconds;
+    print("init iframe video, resumePoint: $resumePoint");
+    if (resumePoint != null) {
+      await controller.seekTo(seconds: resumePoint.toDouble());
+    }
+    setState(() {});
+  }
+
+  void _saveProgress(YoutubePlayerValue currentStatus) async {
+    if (!_isMounted) return;
+    var current = await controller.currentTime;
+    var total = controller.value.metaData.duration == Duration.zero
+        ? Duration(seconds: (await controller.duration).toInt())
+        : controller.value.metaData.duration;
+
+    if ([
+      PlayerState.playing,
+      PlayerState.paused,
+      PlayerState.ended,
+      PlayerState.cued
+    ].contains(currentStatus.playerState)) {
+      ref
+          .read(videoProgressProvider(widget.articleId).notifier)
+          .updateVideoProgress(
+              widget.uuid, Duration(seconds: current.toInt()), total);
+    }
+  }
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    controller.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ignore: sized_box_for_whitespace
+    return YoutubePlayer(
+      controller: controller,
+      aspectRatio: 16 / 9,
     );
   }
 }

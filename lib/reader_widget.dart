@@ -9,6 +9,7 @@ import 'package:responsive_1/video_widgets.dart';
 import 'package:uuid/uuid.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'widgets.dart';
 
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -40,7 +41,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
     <h2>Image Example</h2>
     <p><img src="https://hips.hearstapps.com/hmg-prod/images/bright-forget-me-nots-royalty-free-image-1677788394.jpg" alt="Flowers image"></p>
     <h2>IFrame Example</h2>
-    <p><iframe width="420" height="345" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></p>
+    <p><iframe width="520" height="300" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></p>
     </ul>
     <h2>Video Example</h2>
     <video width="320" height="240" controls>
@@ -54,6 +55,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
   Your browser does not support the video tag.
   <figcaption> Hello World</figcaption>
 </video>
+<h2>Another Random Image</h2>
 <p><img src="https://www.shutterstock.com/shutterstock/photos/2056485080/display_1500/stock-vector-address-and-navigation-bar-icon-business-concept-search-www-http-pictogram-d-concept-2056485080.jpg" alt="Flowers image"></p>
   </article>
 </body>
@@ -224,7 +226,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(
-        const Duration(milliseconds: 300),
+        const Duration(milliseconds: 450),
         () {
           if (customScrollViewController.hasClients) {
             double progress = ref.read(scrollProgressProvider(article.id)) *
@@ -291,7 +293,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               controller: customScrollViewController,
               slivers: [
                 SliverAppBar(
-                  leading: const Icon(Icons.arrow_back),
+                  leading: IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    color: Colors.white,
+                  ),
+                  // automaticallyImplyLeading: false,
                   floating: true,
                   snap: true,
                   flexibleSpace: Container(
@@ -622,9 +629,34 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                   ),
                                   Align(
                                     alignment: Alignment.centerRight,
-                                    child: ElevatedButton(
-                                        onPressed: () {},
-                                        child: const Text("Read ")),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 15.0, right: 9),
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(const SnackBar(
+                                                  content: Text(
+                                                      "Read Complete! Progress Marked 100%")));
+                                          Navigator.of(context).pop();
+                                        },
+                                        icon: const Icon(Icons.check, size: 24),
+                                        label: const Text(
+                                          "Completed!",
+                                          style: TextStyle(fontSize: 18),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 18, horizontal: 25),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   )
                                 ],
                               ),
@@ -856,10 +888,12 @@ class CustomWidgetFactory extends WidgetFactory {
   @override
   Widget? buildWebView(BuildTree tree, String url,
       {double? height, Iterable<String>? sandbox, double? width}) {
-    print("BUILDING WEBVIEW URL: $url");
-    print("SANDBOX: $sandbox\n tag: ${tree.element.attributeSpans}");
-    return super.buildWebView(tree, url,
-        height: height, sandbox: sandbox, width: width);
+    String uuid = tree.element.attributes["data-uuid"]!;
+    return IframeWidget(
+      url: url,
+      uuid: uuid,
+      articleId: article.id,
+    );
   }
   // @override
   // void parse(BuildTree tree) {

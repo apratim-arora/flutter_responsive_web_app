@@ -263,12 +263,11 @@ class VideoProgress extends _$VideoProgress {
       videoCurrentPosition: currentPosition,
       videoTotalDuration: totalDuration
     };
-    print(
-        "updateVideoProgress provider : ${newState[videoUuid]?[videoCurrentPosition]}= $currentPosition, @videoUUID:$videoUuid\t fullMap:${state.value}");
+    print("updateVideoProgress provider:${state.value}");
     state = AsyncValue.data(newState);
   }
 
-  Future<void> saveVideoProgress(
+  Future<void> saveVideoProgressToStorage(
       String videoUuid, Duration currentPosition) async {
     ///Save the progress in storage. using articleId
     articleId;
@@ -389,8 +388,8 @@ class CombinedProgress extends _$CombinedProgress {
     var (charsRead, totalChars) = ref.watch(textCharsReadProvider(articleID));
     var (imgCharsRead, totalImgChars) =
         ref.watch(imageSeenProgressProvider(articleID));
-        //keeping non-future providers watch above future providers
-        // as they unknowingly become 0 otherwise
+    //keeping non-future providers watch above future providers
+    // as they unknowingly become 0 otherwise
     var videoP = await ref.watch(videoProgressProvider(articleID).future);
     int videoCharsRead = 0, totalVideoChars = 0;
     String textProgress = "[Text] = $charsRead/$totalChars";
